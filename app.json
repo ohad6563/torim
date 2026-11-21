@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "תורים בקליק",
+    "slug": "torim-beclick",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "torim",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FBF8F6",
+    "ios": {
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.torimbeclick.app",
+      "supportsTablet": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.torimbeclick.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#8E3B6B",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png",
+      "name": "תורים בקליק",
+      "shortName": "תורים",
+      "lang": "he",
+      "themeColor": "#8E3B6B",
+      "backgroundColor": "#FBF8F6"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-localization",
+        {
+          "supportsRTL": true,
+          "forcesRTL": true
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#8E3B6B",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
