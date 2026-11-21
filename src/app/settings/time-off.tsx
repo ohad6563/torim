@@ -77,7 +77,8 @@ function TimeOffScreen() {
 
   async function remove(t: TimeOff) {
     if (!(await confirm('מחיקת חסימה', 'למחוק את החסימה? השעות ייפתחו שוב לקביעת תורים.', { confirmText: 'מחיקה', destructive: true }))) return;
-    await supabase.from('time_off').delete().eq('id', t.id);
+    const { error: err } = await supabase.from('time_off').delete().eq('id', t.id);
+    if (err) setError(errorMessage(err));
     reload();
   }
 
@@ -111,7 +112,7 @@ function TimeOffScreen() {
             <Txt bold style={{ flex: 1 }}>
               ימים שלמים
             </Txt>
-            <Toggle value={fullDay} onValueChange={setFullDay} />
+            <Toggle label={'ימים שלמים'} value={fullDay} onValueChange={setFullDay} />
           </Row>
           {fullDay ? (
             <>

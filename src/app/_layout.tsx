@@ -87,6 +87,7 @@ export default function RootLayout() {
               <Stack.Screen name="complete-profile" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="privacy" options={{ title: 'מדיניות פרטיות' }} />
               <Stack.Screen name="delete-account" options={{ title: 'מחיקת חשבון' }} />
+              <Stack.Screen name="+not-found" options={{ title: 'לא נמצא' }} />
               <Stack.Screen name="(owner)" options={{ headerShown: false }} />
               <Stack.Screen name="(customer)" options={{ headerShown: false }} />
               <Stack.Screen name="studio" options={{ title: 'תצוגת לקוח' }} />

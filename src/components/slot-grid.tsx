@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Appear, Skeleton, Txt } from '@/components/ui';
 import { WHEEL_ITEM_HEIGHT, WheelPicker } from '@/components/wheel-picker';
 import { timeOf } from '@/lib/dates';
-import { spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 function partOfDay(time: string) {
   if (time < '12:00') return 'בוקר';
@@ -22,6 +22,8 @@ export function SlotGrid({
   selected,
   onSelect,
   emptyText = 'אין שעות פנויות ביום הזה.',
+  autoSelect = true,
+  error,
 }: {
   slots: string[] | null;
   loading: boolean;
@@ -29,12 +31,22 @@ export function SlotGrid({
   selected: string | null;
   onSelect: (slot: string) => void;
   emptyText?: string;
+  /** Pre-select the first free time (off for rescheduling, where an accidental save would move the appointment). */
+  autoSelect?: boolean;
+  error?: string | null;
 }) {
   useEffect(() => {
-    if (slots && slots.length > 0 && (!selected || !slots.includes(selected))) onSelect(slots[0]);
-  }, [slots, selected, onSelect]);
+    if (autoSelect && slots && slots.length > 0 && (!selected || !slots.includes(selected))) onSelect(slots[0]);
+  }, [autoSelect, slots, selected, onSelect]);
 
   if (loading) return <Skeleton height={WHEEL_ITEM_HEIGHT * 5} />;
+  if (error) {
+    return (
+      <Txt color={colors.danger} center style={{ paddingVertical: spacing.xl }}>
+        {error}
+      </Txt>
+    );
+  }
   if (!slots || slots.length === 0) {
     return (
       <Appear>
@@ -54,7 +66,7 @@ export function SlotGrid({
     <Appear>
       <WheelPicker items={items} selectedKey={selected} onChange={onSelect} accessibilityLabel="בחירת שעה" />
       <Txt variant="tiny" faint center style={{ marginTop: spacing.sm }}>
-        {slots.length} שעות פנויות · גוללים לבחירה
+        {slots.length === 1 ? 'שעה פנויה אחת' : `${slots.length} שעות פנויות`} · גוללים לבחירה
       </Txt>
     </Appear>
   );

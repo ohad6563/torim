@@ -1,4 +1,4 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import type { Service } from '@/lib/types';
 import { spacing } from '@/theme';
 import { withOwner } from '@/components/owner-gate';
+import { goBackOr } from '@/lib/nav';
 
 const DURATIONS = [15, 20, 30, 45, 60, 75, 90, 120];
 
@@ -62,7 +63,7 @@ function EditService() {
       : await supabase.from('services').update(row).eq('id', id);
     setBusy(false);
     if (err) setError(errorMessage(err));
-    else router.back();
+    else goBackOr('/services');
   }
 
   async function remove() {
@@ -73,7 +74,7 @@ function EditService() {
     if (!ok) return;
     const { error: err } = await supabase.from('services').delete().eq('id', id);
     if (err) setError(errorMessage(err));
-    else router.back();
+    else goBackOr('/services');
   }
 
   if (loading) return <Loading />;
@@ -104,7 +105,7 @@ function EditService() {
             כשכבוי, אי אפשר לקבוע את השירות אונליין.
           </Txt>
         </View>
-        <Toggle value={active} onValueChange={setActive} />
+        <Toggle label={'מוצג ללקוחות'} value={active} onValueChange={setActive} />
       </Row>
 
       <ErrorBox message={error} />

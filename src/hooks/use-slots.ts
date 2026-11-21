@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 
+import { errorMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 
-type Result = { key: string; slots: string[] };
+type Result = { key: string; slots: string[]; error: string | null };
 
 /** Free start times (ISO timestamps) for a service on a local day. */
 export function useSlots(businessId: string | undefined, serviceId: string | null, day: string, refreshKey = 0) {
@@ -16,14 +17,14 @@ export function useSlots(businessId: string | undefined, serviceId: string | nul
       .rpc('get_available_slots', { p_business_id: businessId, p_service_id: serviceId, p_day: day })
       .then(({ data, error }) => {
         // Supabase returns `setof timestamptz` as an array of strings.
-        if (!cancelled) setResult({ key, slots: error ? [] : ((data as string[] | null) ?? []) });
+        if (!cancelled) setResult({ key, slots: error ? [] : ((data as string[] | null) ?? []), error: error ? errorMessage(error) : null });
       });
     return () => {
       cancelled = true;
     };
   }, [key, businessId, serviceId, day]);
 
-  if (!key) return { slots: null, loading: false };
-  const current = result?.key === key ? result.slots : null;
-  return { slots: current, loading: current === null };
+  if (!key) return { slots: null, loading: false, error: null };
+  const current = result?.key === key ? result : null;
+  return { slots: current?.slots ?? null, loading: current === null, error: current?.error ?? null };
 }

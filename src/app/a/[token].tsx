@@ -27,8 +27,13 @@ export default function MyAppointment() {
   useEffect(() => {
     if (!validToken) return;
     let cancelled = false;
-    supabase.rpc('get_appointment_by_token', { p_token: token }).then(({ data }) => {
+    supabase.rpc('get_appointment_by_token', { p_token: token }).then(({ data, error: err }) => {
       if (cancelled) return;
+      if (err) {
+        setError(errorMessage(err));
+        setLoading(false);
+        return;
+      }
       setAppt(((Array.isArray(data) ? data[0] : data) as PublicAppointment | undefined) ?? null);
       setLoading(false);
     });
@@ -41,7 +46,12 @@ export default function MyAppointment() {
   if (!appt) {
     return (
       <Screen>
-        <EmptyState icon="search-outline" title="התור לא נמצא" message="ייתכן שהקישור שגוי." />
+        <EmptyState
+          icon={error ? 'cloud-offline-outline' : 'search-outline'}
+          title={error ? 'אין חיבור כרגע' : 'התור לא נמצא'}
+          message={error ?? 'ייתכן שהקישור שגוי.'}
+          action={error ? <Button title="נסו שוב" onPress={load} /> : undefined}
+        />
       </Screen>
     );
   }

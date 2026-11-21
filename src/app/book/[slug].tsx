@@ -53,7 +53,7 @@ const STEP_TITLES: Record<Step, string> = {
 function BookFlow() {
   const { profile } = useAuth();
   const params = useLocalSearchParams<{ slug: string; service?: string }>();
-  const { data, loading } = usePublicBusiness(params.slug);
+  const { data, loading, error: loadError, retry } = usePublicBusiness(params.slug);
 
   const [step, setStep] = useState<Step>(params.service ? 'time' : 'service');
   const [serviceId, setServiceId] = useState<string | null>(params.service ?? null);
@@ -84,9 +84,16 @@ function BookFlow() {
   // Until the customer picks a day, default to the first open one.
   const day = pickedDay || (days.find((d) => !closedDays.has(d)) ?? days[0] ?? '');
 
-  const { slots, loading: slotsLoading } = useSlots(business?.id, serviceId, day, refreshKey);
+  const { slots, loading: slotsLoading, error: slotsError } = useSlots(business?.id, serviceId, day, refreshKey);
 
   if (loading) return <Loading />;
+  if (loadError && !data) {
+    return (
+      <Screen>
+        <EmptyState icon="cloud-offline-outline" title="אין חיבור כרגע" message={loadError} action={<Button title="נסו שוב" onPress={retry} />} />
+      </Screen>
+    );
+  }
   if (!data || !business) {
     return (
       <Screen>
@@ -143,11 +150,13 @@ function BookFlow() {
     return <Success businessName={business.name} address={business.address} service={service} slot={slot} tz={tz} token={token} />;
   }
 
-  const stepIndex = STEPS.indexOf(step);
+  // A link to a service that no longer exists (or is hidden): start from choosing a service.
+  const effectiveStep: Step = step !== 'service' && !service ? 'service' : step;
+  const stepIndex = STEPS.indexOf(effectiveStep);
   const footer =
-    step === 'time' ? (
+    effectiveStep === 'time' ? (
       <Button title={slot ? `המשך · ${timeOf(slot, tz)}` : 'בחרו שעה'} disabled={!slot} onPress={() => setStep('details')} />
-    ) : step === 'details' ? (
+    ) : effectiveStep === 'details' ? (
       <Button title="אישור וקביעת התור" onPress={book} loading={busy} />
     ) : undefined;
 
@@ -165,10 +174,10 @@ function BookFlow() {
       <Progress index={stepIndex} />
 
       <Screen footer={footer} edges={['bottom']}>
-        <Animated.View key={step} entering={FadeInLeft.duration(380).easing(Easing.out(Easing.cubic))} style={{ gap: spacing.lg }}>
-          <Txt variant="h1">{STEP_TITLES[step]}</Txt>
+        <Animated.View key={effectiveStep} entering={FadeInLeft.duration(380).easing(Easing.out(Easing.cubic))} style={{ gap: spacing.lg }}>
+          <Txt variant="h1">{STEP_TITLES[effectiveStep]}</Txt>
 
-          {step === 'service' ? (
+          {effectiveStep === 'service' ? (
             <View style={styles.list}>
               {data.services.map((s, i) => (
                 <Appear key={s.id} index={i}>
@@ -198,7 +207,7 @@ function BookFlow() {
             </View>
           ) : null}
 
-          {step === 'time' && service ? (
+          {effectiveStep === 'time' && service ? (
             <>
               <Pressable onPress={() => setStep('service')} style={styles.summary} accessibilityRole="button" accessibilityLabel="החלפת טיפול">
                 <View style={{ flex: 1 }}>
@@ -224,7 +233,7 @@ function BookFlow() {
                   setSlot(null);
                 }}
               />
-              <SlotGrid
+              <SlotGrid error={slotsError}
                 key={`${day}-${refreshKey}`}
                 slots={slots}
                 loading={slotsLoading}
@@ -237,7 +246,7 @@ function BookFlow() {
             </>
           ) : null}
 
-          {step === 'details' && service && slot ? (
+          {effectiveStep === 'details' && service && slot ? (
             <>
               <View style={styles.ticket}>
                 <Txt label variant="tiny">

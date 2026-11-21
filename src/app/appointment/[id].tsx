@@ -57,13 +57,17 @@ function AppointmentDetails() {
   const isPast = new Date(appt.ends_at) < new Date();
   const when = `${formatDayLong(appt.local_date)} בשעה ${timeOf(appt.starts_at, tz)}`;
 
-  async function setStatus(status: AppointmentStatus) {
+  async function setStatus(status: AppointmentStatus): Promise<boolean> {
     setError(null);
     setBusy(status);
-    const { error: err } = await supabase.from('appointments').update({ status }).eq('id', appt!.id);
+    const { data, error: err } = await supabase.from('appointments').update({ status }).eq('id', appt!.id).select('id');
     setBusy(null);
-    if (err) setError(errorMessage(err));
-    else reload();
+    if (err || !data?.length) {
+      setError(err ? errorMessage(err) : 'העדכון לא נשמר. נסו שוב.');
+      return false;
+    }
+    reload();
+    return true;
   }
 
   async function cancel() {
@@ -73,7 +77,7 @@ function AppointmentDetails() {
       destructive: true,
     });
     if (!ok) return;
-    await setStatus('cancelled');
+    if (!(await setStatus('cancelled'))) return;
     const notify = await confirm('לעדכן את הלקוח/ה?', 'לשלוח הודעת וואטסאפ על ביטול התור?', {
       confirmText: 'שליחה',
       cancelText: 'לא עכשיו',
@@ -201,7 +205,7 @@ function Reschedule({ appt, onDone, onCancel }: { appt: Appointment; onDone: () 
   const [slot, setSlot] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { slots, loading } = useSlots(business.id, appt.service_id, day);
+  const { slots, loading, error: slotsError } = useSlots(business.id, appt.service_id, day);
 
   async function save() {
     if (!slot) return setError('בחרו שעה חדשה.');
@@ -221,7 +225,7 @@ function Reschedule({ appt, onDone, onCancel }: { appt: Appointment; onDone: () 
       <SectionTitle>העברה ל{formatDayLong(day)}</SectionTitle>
       <DateStrip days={days} selected={day} onSelect={(d) => { setDay(d); setSlot(null); }} />
       {appt.service_id ? (
-        <SlotGrid slots={slots} loading={loading} tz={tz} selected={slot} onSelect={setSlot} />
+        <SlotGrid error={slotsError} slots={slots} loading={loading} tz={tz} selected={slot} onSelect={setSlot} autoSelect={false} />
       ) : (
         <Txt muted>השירות של התור הזה נמחק, לכן אי אפשר להעביר אותו. בטלו וקבעו תור חדש.</Txt>
       )}

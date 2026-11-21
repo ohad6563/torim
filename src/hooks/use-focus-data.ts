@@ -40,6 +40,15 @@ export function useFocusData<T>(loader: () => Promise<T>, deps: unknown[]) {
   }, []);
 
   const depsKey = JSON.stringify(deps);
+  // When the inputs change (e.g. another day in the calendar), drop the old data at once so
+  // it is never shown under the new heading while the new data loads.
+  const [shownKey, setShownKey] = useState(depsKey);
+  if (shownKey !== depsKey) {
+    setShownKey(depsKey);
+    setData(null);
+    setLoading(true);
+  }
+
   useFocusEffect(
     useCallback(() => {
       run('silent');

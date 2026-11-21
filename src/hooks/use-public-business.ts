@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { errorMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import type { Business, Service, WorkingHours } from '@/lib/types';
 
@@ -17,16 +18,25 @@ export type PublicBusiness = {
 export function usePublicBusiness(slug: string | undefined) {
   const [data, setData] = useState<PublicBusiness | null>(null);
   const [loading, setLoading] = useState(Boolean(slug));
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!slug) return;
     let cancelled = false;
     (async () => {
-      const { data: b } = await supabase
+      const { data: b, error: bErr } = await supabase
         .from('businesses')
         .select(PUBLIC_BUSINESS_COLUMNS)
         .eq('slug', slug.toLowerCase())
         .maybeSingle();
+      if (bErr) {
+        if (!cancelled) {
+          setError(errorMessage(bErr));
+          setLoading(false);
+        }
+        return;
+      }
       if (b) {
         const [s, h] = await Promise.all([
           supabase
@@ -46,12 +56,19 @@ export function usePublicBusiness(slug: string | undefined) {
           });
         }
       }
-      if (!cancelled) setLoading(false);
+      if (!cancelled) {
+        setError(null);
+        setLoading(false);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, attempt]);
 
-  return { data, loading };
+  const retry = () => {
+    setLoading(true);
+    setAttempt((n) => n + 1);
+  };
+  return { data, loading, error, retry };
 }

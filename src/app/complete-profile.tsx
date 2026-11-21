@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 
 import { AuthHero } from '@/components/auth-hero';
@@ -11,16 +11,20 @@ import { spacing } from '@/theme';
 
 /** Shown once, right after a new phone number signs in: asks for the customer's name. */
 function CompleteProfile() {
-  const { session, refresh } = useAuth();
+  const { session, profile, isAdmin, refresh } = useAuth();
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Already done (or an admin): nothing to complete here.
+  if (isAdmin || profile?.full_name) return <Redirect href="/" />;
 
   async function save() {
     setError(null);
     if (name.trim().length < 2) return setError('נא להזין שם מלא.');
     setBusy(true);
-    const { error: err } = await supabase.from('profiles').update({ full_name: name.trim() }).eq('id', session!.user.id);
+    // upsert: works even if the profile row wasn't created at sign-up.
+    const { error: err } = await supabase.from('profiles').upsert({ id: session!.user.id, full_name: name.trim() });
     if (err) {
       setBusy(false);
       return setError(errorMessage(err));

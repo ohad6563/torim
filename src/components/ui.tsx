@@ -368,6 +368,8 @@ export function Field({ label, error, hint, style, onFocus, onBlur, ...props }: 
           cursorColor={colors.text}
           keyboardAppearance={colors.isDark ? 'dark' : 'light'}
           maxFontSizeMultiplier={1.6}
+          accessibilityLabel={label}
+          accessibilityHint={error ?? hint}
           onFocus={(e) => {
             focus.set(withTiming(1, { duration: 180 }));
             onFocus?.(e);
@@ -436,10 +438,19 @@ export function Chip({
 }
 
 /** Switch in brand colours. On web it is kept left-to-right so the knob stays inside the track. */
-export function Toggle({ value, onValueChange }: { value: boolean; onValueChange: (v: boolean) => void }) {
+export function Toggle({
+  value,
+  onValueChange,
+  label,
+}: {
+  value: boolean;
+  onValueChange: (v: boolean) => void;
+  label?: string;
+}) {
   return (
     <View style={Platform.OS === 'web' ? styles.ltr : undefined}>
       <Switch
+        accessibilityLabel={label}
         value={value}
         onValueChange={(v) => {
           haptics.select();

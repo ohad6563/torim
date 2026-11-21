@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 import { Platform } from 'react-native';
 
+import { AccountError } from '@/components/account-error';
 import { Loading, type IconName } from '@/components/ui';
 import { useAuth } from '@/context/auth';
 import { colors, family } from '@/theme';
@@ -14,10 +15,11 @@ const TABS: { name: string; title: string; icon: IconName; header: boolean }[] =
 
 /** The customer app. Signed-in accounts that don't manage the studio land here. */
 export default function CustomerLayout() {
-  const { loading, session, isAdmin, profile } = useAuth();
+  const { loading, session, isAdmin, profile, accountError } = useAuth();
   if (loading && !session) return <Loading />;
   if (!session) return <Redirect href="/login" />;
   if (isAdmin) return <Redirect href="/calendar" />;
+  if (accountError && !profile) return <AccountError />;
   if (!loading && !profile?.full_name) return <Redirect href="/complete-profile" />;
 
   return (

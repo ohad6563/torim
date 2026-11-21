@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { Card, EmptyState, ErrorBox, Field, Loading, Row, Screen, Txt } from '@/components/ui';
 import { useBusiness } from '@/context/auth';
 import { useFocusData } from '@/hooks/use-focus-data';
-import { formatPhone } from '@/lib/dates';
+import { formatPhone, normalizePhone } from '@/lib/dates';
 import { supabase } from '@/lib/supabase';
 import type { Customer } from '@/lib/types';
 import { colors, spacing } from '@/theme';
@@ -27,7 +27,7 @@ export default function Customers() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const digits = q.replace(/\D/g, '');
+    const digits = /\d/.test(q) ? normalizePhone(q).replace(/^0/, '') : '';
     if (!q) return data ?? [];
     return (data ?? []).filter(
       (c) => c.name.toLowerCase().includes(q) || (digits.length > 0 && c.phone.includes(digits)),
@@ -49,7 +49,7 @@ export default function Customers() {
       ) : (
         <View style={{ gap: spacing.sm }}>
           <Txt variant="small" muted>
-            {filtered.length} לקוחות
+            {filtered.length === 1 ? 'לקוח/ה אחד/ת' : `${filtered.length} לקוחות`}
           </Txt>
           {filtered.map((c) => (
             <Card key={c.id} onPress={() => router.push({ pathname: '/customer/[id]', params: { id: c.id } })}>

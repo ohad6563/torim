@@ -83,7 +83,7 @@ export default function Calendar() {
           <Row>
             <IconButton icon="chevron-forward" label="שבוע קודם" onPress={() => setDay(addDays(day, -7))} />
             <Txt variant="h3" center style={{ flex: 1 }}>
-              {monthName(weekStart)} {weekStart.slice(0, 4)}
+              {monthName(weekStart) === monthName(addDays(weekStart, 6)) ? `${monthName(weekStart)} ${weekStart.slice(0, 4)}` : `${monthName(weekStart)}–${monthName(addDays(weekStart, 6))} ${addDays(weekStart, 6).slice(0, 4)}`}
             </Txt>
             <IconButton icon="chevron-back" label="שבוע הבא" onPress={() => setDay(addDays(day, 7))} />
           </Row>
@@ -99,7 +99,7 @@ export default function Calendar() {
         {active.length > 0 ? (
           <Row style={styles.summary}>
             <Txt variant="small" muted style={{ flex: 1 }}>
-              {active.length} תורים
+              {active.length === 1 ? 'תור אחד' : `${active.length} תורים`}
             </Txt>
             {expected > 0 ? (
               <Txt variant="small" muted>

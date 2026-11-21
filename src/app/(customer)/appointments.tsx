@@ -17,6 +17,8 @@ export default function MyAppointments() {
           <Skeleton height={84} />
           <Skeleton height={84} />
         </>
+      ) : error ? (
+        <Button title="נסו שוב" variant="secondary" onPress={refresh} />
       ) : upcoming.length === 0 && past.length === 0 ? (
         <EmptyState
           icon="calendar-clear-outline"

@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase';
 import type { Appointment, Customer } from '@/lib/types';
 import { spacing } from '@/theme';
 import { withOwner } from '@/components/owner-gate';
+import { goBackOr } from '@/lib/nav';
 
 function CustomerDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -84,7 +85,7 @@ function CustomerDetails() {
     if (!ok) return;
     const { error: err } = await supabase.from('customers').delete().eq('id', customer!.id);
     if (err) setError(errorMessage(err));
-    else router.back();
+    else goBackOr('/customers');
   }
 
   return (

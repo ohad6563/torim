@@ -594,3 +594,31 @@ revoke execute on function public.my_appointments() from public, anon;
 revoke execute on function public.cancel_my_appointment(uuid) from public, anon;
 grant execute on function public.my_appointments() to authenticated;
 grant execute on function public.cancel_my_appointment(uuid) to authenticated;
+
+-- QA: saving working hours is atomic (before, a failed insert after the delete left the studio with no hours).
+create or replace function public.replace_working_hours(p_hours jsonb)
+returns void
+language plpgsql volatile security definer set search_path = public
+as $$
+declare
+  v_business uuid;
+begin
+  select id into v_business from my_business() limit 1;
+  if v_business is null then raise exception 'NOT_ALLOWED'; end if;
+  if jsonb_typeof(p_hours) <> 'array' or jsonb_array_length(p_hours) > 50 then raise exception 'INVALID_RANGE'; end if;
+
+  delete from working_hours where business_id = v_business;
+  insert into working_hours (business_id, weekday, start_time, end_time)
+  select v_business, (h ->> 'weekday')::smallint, (h ->> 'start_time')::time, (h ->> 'end_time')::time
+  from jsonb_array_elements(p_hours) h;
+end;
+$$;
+
+revoke execute on function public.replace_working_hours(jsonb) from public, anon;
+grant execute on function public.replace_working_hours(jsonb) to authenticated;
+
+-- QA: the name step uses upsert, so an account whose profile row is missing can still save its name.
+-- Only its own row, and without setting a phone (that comes from the verified sign-in).
+drop policy if exists "own profile insert" on public.profiles;
+create policy "own profile insert" on public.profiles for insert
+  with check (id = auth.uid() and phone is null and username is null);

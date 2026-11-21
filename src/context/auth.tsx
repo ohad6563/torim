@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
+import { errorMessage } from '@/lib/errors';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { Business, Profile } from '@/lib/types';
 
@@ -12,6 +13,8 @@ type AuthState = {
   /** The business this account manages (owner or admin). Null for customers. */
   business: Business | null;
   isAdmin: boolean;
+  /** Set when the account details couldn't be loaded (e.g. no network). */
+  accountError: string | null;
   refresh: () => Promise<void>;
   /** @deprecated use refresh */
   refreshBusiness: () => Promise<void>;
@@ -25,12 +28,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(isSupabaseConfigured);
+  const [accountError, setAccountError] = useState<string | null>(null);
   const loadedUserRef = useRef<string | null | undefined>(undefined);
 
   const loadAccount = useCallback(async (s: Session | null) => {
     if (!s) {
       setBusiness(null);
       setProfile(null);
+      setAccountError(null);
       return;
     }
     setLoading(true);
@@ -39,9 +44,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase.rpc('my_business'),
         supabase.from('profiles').select('*').eq('id', s.user.id).maybeSingle(),
       ]);
+      // On failure keep what we had: never demote an admin or "lose" a name because of a network error.
+      if (biz.error || prof.error) {
+        setAccountError(errorMessage(biz.error ?? prof.error));
+        return;
+      }
       const rows = (biz.data ?? []) as Business[];
       setBusiness(rows[0] ?? null);
       setProfile((prof.data as Profile | null) ?? null);
+      setAccountError(null);
+    } catch (e) {
+      setAccountError(errorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -88,15 +101,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       business,
       isAdmin: business !== null,
+      accountError,
       refresh: () => loadAccount(session),
       refreshBusiness: () => loadAccount(session),
       signOut: async () => {
-        await supabase.auth.signOut();
+        // 'local' always clears this device's session, even offline.
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+        setSession(null);
         setBusiness(null);
         setProfile(null);
+        setAccountError(null);
       },
     }),
-    [loading, session, profile, business, loadAccount],
+    [loading, session, profile, business, accountError, loadAccount],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

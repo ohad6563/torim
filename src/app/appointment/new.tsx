@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -22,6 +22,7 @@ import { supabase } from '@/lib/supabase';
 import type { Customer, Service } from '@/lib/types';
 import { colors, radius, spacing } from '@/theme';
 import { withOwner } from '@/components/owner-gate';
+import { goBackOr } from '@/lib/nav';
 
 function NewAppointment() {
   const business = useBusiness();
@@ -54,7 +55,7 @@ function NewAppointment() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { slots, loading: slotsLoading } = useSlots(business.id, serviceId, day);
+  const { slots, loading: slotsLoading, error: slotsError } = useSlots(business.id, serviceId, day);
 
   useEffect(() => {
     supabase
@@ -126,7 +127,7 @@ function NewAppointment() {
     });
     setBusy(false);
     if (err) return setError(errorMessage(err));
-    router.back();
+    goBackOr('/calendar');
   }
 
   return (
@@ -172,7 +173,7 @@ function NewAppointment() {
           hint="אפשר לקבוע גם מחוץ לשעות הפעילות. המערכת תמנע רק חפיפה עם תור אחר."
         />
       ) : serviceId ? (
-        <SlotGrid slots={slots} loading={slotsLoading} tz={tz} selected={slot} onSelect={setSlot} />
+        <SlotGrid error={slotsError} slots={slots} loading={slotsLoading} tz={tz} selected={slot} onSelect={setSlot} />
       ) : (
         <Txt muted>בחרו שירות כדי לראות שעות פנויות.</Txt>
       )}

@@ -6,6 +6,7 @@ import { Button, Card, Divider, Row, Screen, Txt, type IconName } from '@/compon
 import { useAuth, useBusiness } from '@/context/auth';
 import { confirm, showMessage } from '@/lib/dialogs';
 import { errorMessage } from '@/lib/errors';
+import { formatPhone } from '@/lib/dates';
 import { bookingUrl, shareLink } from '@/lib/links';
 import { supabase } from '@/lib/supabase';
 import { colors, spacing } from '@/theme';
@@ -89,7 +90,7 @@ export default function Settings() {
       </Card>
 
       <Txt variant="small" muted center>
-        מחובר/ת כ־{profile?.username ?? session?.user.email}
+        מחובר/ת כ־{profile?.phone ? `\u2066${formatPhone(profile.phone)}\u2069` : (session?.user.email ?? '')}
       </Txt>
       <Button title="התנתקות" variant="secondary" icon="log-out-outline" onPress={logout} />
       <Button title="מדיניות פרטיות" variant="ghost" onPress={() => router.push('/privacy')} />

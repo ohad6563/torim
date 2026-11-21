@@ -1,5 +1,5 @@
-import { Redirect, router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { Redirect, router, useLocalSearchParams, type Href } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { Easing, FadeInLeft } from 'react-native-reanimated';
 
@@ -11,6 +11,7 @@ import { formatPhone } from '@/lib/dates';
 import { errorMessage } from '@/lib/errors';
 import { haptics } from '@/lib/haptics';
 import { isMobile, toE164 } from '@/lib/identity';
+import { safeNext } from '@/lib/nav';
 import { supabase } from '@/lib/supabase';
 import { spacing } from '@/theme';
 
@@ -23,6 +24,8 @@ const RESEND_SECONDS = 45;
  */
 export default function Login() {
   const { session } = useAuth();
+  // Where to go after signing in (e.g. a booking link opened while signed out).
+  const next = safeNext(useLocalSearchParams<{ next?: string }>().next);
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
@@ -30,6 +33,7 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [shake, setShake] = useState(0);
   const [resendIn, setResendIn] = useState(0);
+  const sending = useRef(false);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -37,14 +41,18 @@ export default function Login() {
     return () => clearTimeout(t);
   }, [resendIn]);
 
-  if (session) return <Redirect href="/" />;
+  if (session) return <Redirect href={(next ?? '/') as Href} />;
 
   async function sendCode() {
+    // A quick double Enter/tap must not send two SMS (state updates are too slow to guard this).
+    if (sending.current) return;
     setError(null);
     if (!isMobile(phone)) return setError('הזינו מספר נייד ישראלי, למשל 050-1234567.');
+    sending.current = true;
     setBusy(true);
     const { error: err } = await supabase.auth.signInWithOtp({ phone: toE164(phone), options: { channel: 'sms' } });
     setBusy(false);
+    sending.current = false;
     if (err) return setError(errorMessage(err));
     setCode('');
     setStep('code');
@@ -64,7 +72,7 @@ export default function Login() {
       return;
     }
     haptics.success();
-    router.replace('/');
+    router.replace((next ?? '/') as Href);
   }
 
   return (

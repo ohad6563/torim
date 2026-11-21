@@ -21,13 +21,17 @@ export async function shareLink(url: string, message: string): Promise<boolean> 
     if (navigator.share) {
       try {
         await navigator.share({ text: message, url });
-        return false;
       } catch {
-        // cancelled or unsupported — fall through to copying
+        // The user closed the share sheet: nothing to do.
       }
+      return false;
     }
-    await navigator.clipboard?.writeText(url);
-    return true;
+    try {
+      await navigator.clipboard?.writeText(url);
+      return true;
+    } catch {
+      return false;
+    }
   }
   await Share.share({ message: `${message}\n${url}` });
   return false;

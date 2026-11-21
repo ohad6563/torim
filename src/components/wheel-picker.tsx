@@ -82,7 +82,8 @@ export function WheelPicker({
   useAnimatedReaction(
     () => Math.round(scrollY.value / WHEEL_ITEM_HEIGHT),
     (index, prev) => {
-      if (index !== prev) scheduleOnRN(onIndex, Math.min(Math.max(index, 0), items.length - 1));
+      // prev is null on the first run: that's the initial position, not a user choice.
+      if (prev !== null && index !== prev) scheduleOnRN(onIndex, Math.min(Math.max(index, 0), items.length - 1));
     },
   );
   useAnimatedReaction(
@@ -114,7 +115,19 @@ export function WheelPicker({
         contentContainerStyle={{ paddingVertical: PAD }}
         style={styles.scroll}>
         {items.map((item, i) => (
-          <Row key={item.key} item={item} index={i} scrollY={scrollY} onPress={() => scrollToIndex(i)} />
+          <Row
+            key={item.key}
+            item={item}
+            index={i}
+            scrollY={scrollY}
+            onPress={() => {
+              scrollToIndex(i);
+              // Tapping the row already in the middle doesn't scroll, so select it directly.
+              lastIndex.current = i;
+              haptics.select();
+              onChange(item.key);
+            }}
+          />
         ))}
       </Animated.ScrollView>
       <LinearGradient pointerEvents="none" colors={[colors.background, `${colors.background}00`]} style={[styles.fade, styles.fadeTop]} />

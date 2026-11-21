@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, usePathname } from 'expo-router';
 import type { ComponentType } from 'react';
 
 import { Loading } from '@/components/ui';
@@ -11,8 +11,9 @@ import { useAuth } from '@/context/auth';
 export function withOwner<P extends object>(Screen: ComponentType<P>) {
   function Guarded(props: P) {
     const { loading, session, business } = useAuth();
+    const pathname = usePathname();
     if (loading) return <Loading />;
-    if (!session) return <Redirect href="/login" />;
+    if (!session) return <Redirect href={{ pathname: '/login', params: { next: pathname } }} />;
     if (!business) return <Redirect href="/" />;
     return <Screen {...props} />;
   }
@@ -24,8 +25,9 @@ export function withOwner<P extends object>(Screen: ComponentType<P>) {
 export function withAccount<P extends object>(Screen: ComponentType<P>) {
   function Guarded(props: P) {
     const { loading, session } = useAuth();
+    const pathname = usePathname();
     if (loading) return <Loading />;
-    if (!session) return <Redirect href="/login" />;
+    if (!session) return <Redirect href={{ pathname: '/login', params: { next: pathname } }} />;
     return <Screen {...props} />;
   }
   Guarded.displayName = `withAccount(${Screen.displayName ?? Screen.name})`;

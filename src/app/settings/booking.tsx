@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+
 import { useState } from 'react';
 import { View } from 'react-native';
 
@@ -8,6 +8,7 @@ import { errorMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { spacing } from '@/theme';
 import { withOwner } from '@/components/owner-gate';
+import { goBackOr } from '@/lib/nav';
 
 const INTERVALS = [10, 15, 20, 30, 60];
 const NOTICE: { min: number; label: string }[] = [
@@ -41,7 +42,7 @@ function BookingSettings() {
     }
     await refreshBusiness();
     setBusy(false);
-    router.back();
+    goBackOr('/settings');
   }
 
   return (

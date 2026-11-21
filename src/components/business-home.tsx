@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Linking, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -19,7 +19,7 @@ import { colors, MAX_WIDTH, radius, spacing } from '@/theme';
  * animation, the customer's next appointment, services, hours and contact.
  */
 export function BusinessHome({ slug }: { slug: string }) {
-  const { data, loading } = usePublicBusiness(slug);
+  const { data, loading, error, retry } = usePublicBusiness(slug);
   const { profile } = useAuth();
   const { upcoming } = useMyAppointments(slug);
   const { width } = useWindowDimensions();
@@ -27,6 +27,13 @@ export function BusinessHome({ slug }: { slug: string }) {
   const firstName = profile?.full_name?.trim().split(/\s+/)[0];
 
   if (loading) return <Loading />;
+  if (error && !data) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <EmptyState icon="cloud-offline-outline" title="אין חיבור כרגע" message={error} action={<Button title="נסו שוב" onPress={retry} />} />
+      </SafeAreaView>
+    );
+  }
   if (!data) {
     return (
       <SafeAreaView style={styles.screen}>
@@ -223,7 +230,7 @@ const styles = StyleSheet.create({
   page: { width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center' },
   pageWide: { maxWidth: 1120, flexDirection: 'row', gap: spacing.xxxl, alignItems: 'flex-start' },
   hero: { alignItems: 'center', paddingTop: spacing.xxxl, paddingBottom: spacing.xxl, gap: spacing.sm },
-  heroWide: { flex: 1, paddingTop: spacing.xxxl * 2, position: 'sticky' as never, top: 0 },
+  heroWide: { flex: 1, paddingTop: spacing.xxxl * 2, ...(Platform.OS === 'web' ? { position: 'sticky' as never, top: 0 } : null) },
   tagline: { maxWidth: 360, marginTop: spacing.sm },
   heroCta: { width: '100%', maxWidth: 360, gap: spacing.lg, marginTop: spacing.xl },
   content: { gap: spacing.xxl },
