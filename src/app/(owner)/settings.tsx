@@ -19,7 +19,7 @@ const ITEMS: { icon: IconName; title: string; subtitle: string; href: Href }[] =
 
 export default function Settings() {
   const business = useBusiness();
-  const { session, signOut } = useAuth();
+  const { session, profile, signOut } = useAuth();
 
   async function share() {
     const copied = await shareLink(bookingUrl(business.slug), `לקביעת תור ב${business.name}:`);
@@ -29,21 +29,23 @@ export default function Settings() {
   async function logout() {
     if (await confirm('התנתקות', 'להתנתק מהחשבון?', { confirmText: 'התנתקות' })) {
       await signOut();
-      router.replace('/welcome');
+      router.replace('/login');
     }
   }
 
   async function deleteAccount() {
     const ok = await confirm(
       'מחיקת החשבון',
-      'החשבון, העסק, הלקוחות וכל התורים יימחקו לצמיתות. אי אפשר לשחזר אותם.',
+      business.owner_id === session?.user.id
+        ? 'זה החשבון של בעלת העסק: העסק, הלקוחות וכל התורים יימחקו לצמיתות. אי אפשר לשחזר אותם.'
+        : 'החשבון שלך יימחק. העסק ונתוניו יישארו כמו שהם.',
       { confirmText: 'מחיקה לצמיתות', destructive: true },
     );
     if (!ok) return;
     const { error } = await supabase.rpc('delete_my_account');
     if (error) return showMessage('המחיקה נכשלה', errorMessage(error));
     await signOut();
-    router.replace('/welcome');
+    router.replace('/login');
   }
 
   return (
@@ -60,7 +62,7 @@ export default function Settings() {
             variant="secondary"
             icon="eye-outline"
             title="תצוגה מקדימה"
-            onPress={() => router.push({ pathname: '/b/[slug]', params: { slug: business.slug } })}
+            onPress={() => router.push('/studio')}
           />
         </Row>
       </Card>
@@ -87,7 +89,7 @@ export default function Settings() {
       </Card>
 
       <Txt variant="small" muted center>
-        מחובר/ת כ־{session?.user.email}
+        מחובר/ת כ־{profile?.username ?? session?.user.email}
       </Txt>
       <Button title="התנתקות" variant="secondary" icon="log-out-outline" onPress={logout} />
       <Button title="מחיקת החשבון" variant="ghost" onPress={deleteAccount} style={{ opacity: 0.8 }} />

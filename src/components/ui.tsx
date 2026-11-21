@@ -111,7 +111,7 @@ export function Screen({
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
-            indicatorStyle="white"
+            indicatorStyle={colors.isDark ? 'white' : 'black'}
             refreshControl={
               onRefresh ? (
                 <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={colors.text} />
@@ -366,7 +366,7 @@ export function Field({ label, error, hint, style, onFocus, onBlur, ...props }: 
           placeholderTextColor={colors.textFaint}
           selectionColor={colors.text}
           cursorColor={colors.text}
-          keyboardAppearance="dark"
+          keyboardAppearance={colors.isDark ? 'dark' : 'light'}
           maxFontSizeMultiplier={1.6}
           onFocus={(e) => {
             focus.set(withTiming(1, { duration: 180 }));

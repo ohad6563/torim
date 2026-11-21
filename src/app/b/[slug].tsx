@@ -1,9 +1,11 @@
-import { useLocalSearchParams } from 'expo-router';
+import { Redirect } from 'expo-router';
 
-import { BusinessHome } from '@/components/business-home';
+import { Loading } from '@/components/ui';
+import { useAuth } from '@/context/auth';
 
-/** Public page of a business, opened from its shared link. */
-export default function BusinessPage() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
-  return <BusinessHome slug={String(slug)} />;
+/** Shared studio link. The app is the studio's own, so it simply opens the app (after sign-in). */
+export default function BusinessLink() {
+  const { loading, session } = useAuth();
+  if (loading) return <Loading />;
+  return <Redirect href={session ? '/' : '/login'} />;
 }

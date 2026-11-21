@@ -16,8 +16,9 @@ const TABS: { name: string; title: string; icon: IconName }[] = [
 /** The business owner's area. Only reachable when signed in with a business set up. */
 export default function OwnerLayout() {
   const { loading, session, business } = useAuth();
-  if (!session) return loading ? <Loading /> : <Redirect href="/welcome" />;
-  if (!business) return loading ? <Loading /> : <Redirect href="/onboarding" />;
+  if (loading && !business) return <Loading />;
+  if (!session) return <Redirect href="/login" />;
+  if (!business) return <Redirect href="/" />;
 
   return (
     <Tabs

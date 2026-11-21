@@ -7,7 +7,7 @@ import {
   Heebo_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/heebo';
-import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -26,7 +26,7 @@ if (Platform.OS === 'web') {
   document.documentElement.dir = 'rtl';
   document.documentElement.lang = 'he';
   document.documentElement.style.backgroundColor = colors.background;
-  document.documentElement.style.colorScheme = 'dark';
+  document.documentElement.style.colorScheme = colors.isDark ? 'dark' : 'light';
 } else if (!I18nManager.isRTL) {
   // Native builds are already forced to RTL by the expo-localization plugin (app.json);
   // this is a fallback for Expo Go during development.
@@ -34,10 +34,11 @@ if (Platform.OS === 'web') {
   I18nManager.forceRTL(true);
 }
 
+const baseNav = colors.isDark ? DarkTheme : DefaultTheme;
 const navTheme = {
-  ...DarkTheme,
+  ...baseNav,
   colors: {
-    ...DarkTheme.colors,
+    ...baseNav.colors,
     primary: colors.text,
     background: colors.background,
     card: colors.background,
@@ -66,7 +67,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider style={{ backgroundColor: colors.background }}>
       <ThemeProvider value={navTheme}>
-        <StatusBar style="light" />
+        <StatusBar style={colors.isDark ? 'light' : 'dark'} />
         {isSupabaseConfigured ? (
           <AuthProvider>
             <Stack
@@ -81,12 +82,12 @@ export default function RootLayout() {
                 animation: 'fade_from_bottom',
               }}>
               <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="welcome" options={{ headerShown: false }} />
-              <Stack.Screen name="login" options={{ title: '' }} />
-              <Stack.Screen name="signup" options={{ title: '' }} />
+              <Stack.Screen name="login" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="signup" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="privacy" options={{ title: 'מדיניות פרטיות' }} />
-              <Stack.Screen name="onboarding" options={{ title: 'הקמת העסק', headerBackVisible: false }} />
               <Stack.Screen name="(owner)" options={{ headerShown: false }} />
+              <Stack.Screen name="(customer)" options={{ headerShown: false }} />
+              <Stack.Screen name="studio" options={{ title: 'תצוגת לקוח' }} />
               <Stack.Screen name="appointment/new" options={{ title: 'תור חדש', presentation: 'modal' }} />
               <Stack.Screen name="appointment/[id]" options={{ title: 'פרטי תור' }} />
               <Stack.Screen name="customer/[id]" options={{ title: 'כרטיס לקוח' }} />

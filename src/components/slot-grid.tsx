@@ -1,16 +1,20 @@
-import { StyleSheet, View } from 'react-native';
+import { useEffect } from 'react';
 
-import { Appear, Chip, Skeleton, Txt } from '@/components/ui';
+import { Appear, Skeleton, Txt } from '@/components/ui';
+import { WHEEL_ITEM_HEIGHT, WheelPicker } from '@/components/wheel-picker';
 import { timeOf } from '@/lib/dates';
 import { spacing } from '@/theme';
 
-const PARTS: { label: string; until: string }[] = [
-  { label: 'בוקר', until: '12:00' },
-  { label: 'צהריים', until: '17:00' },
-  { label: 'ערב', until: '24:00' },
-];
+function partOfDay(time: string) {
+  if (time < '12:00') return 'בוקר';
+  if (time < '17:00') return 'צהריים';
+  return 'ערב';
+}
 
-/** Free start times from `get_available_slots`, grouped into morning / noon / evening. */
+/**
+ * Free start times from `get_available_slots`, on a scroll wheel. The first free
+ * time is pre-selected, so the customer only scrolls if they want another one.
+ */
 export function SlotGrid({
   slots,
   loading,
@@ -26,15 +30,11 @@ export function SlotGrid({
   onSelect: (slot: string) => void;
   emptyText?: string;
 }) {
-  if (loading) {
-    return (
-      <View style={styles.grid}>
-        {Array.from({ length: 8 }, (_, i) => (
-          <Skeleton key={i} height={44} style={styles.slot} />
-        ))}
-      </View>
-    );
-  }
+  useEffect(() => {
+    if (slots && slots.length > 0 && (!selected || !slots.includes(selected))) onSelect(slots[0]);
+  }, [slots, selected, onSelect]);
+
+  if (loading) return <Skeleton height={WHEEL_ITEM_HEIGHT * 5} />;
   if (!slots || slots.length === 0) {
     return (
       <Appear>
@@ -45,38 +45,17 @@ export function SlotGrid({
     );
   }
 
-  const groups = PARTS.map((p, i) => {
-    const from = i === 0 ? '00:00' : PARTS[i - 1].until;
-    const items = slots.filter((s) => {
-      const t = timeOf(s, tz);
-      return t >= from && t < p.until;
-    });
-    return { ...p, items };
-  }).filter((g) => g.items.length > 0);
-  // Running index across groups, so the stagger flows from the first slot to the last.
-  const offsets = groups.map((_, i) => groups.slice(0, i).reduce((sum, g) => sum + g.items.length, 0));
+  const items = slots.map((s) => {
+    const t = timeOf(s, tz);
+    return { key: s, label: t, caption: partOfDay(t) };
+  });
 
   return (
-    <View style={{ gap: spacing.lg }}>
-      {groups.map((g, gi) => (
-        <View key={g.label} style={{ gap: spacing.sm }}>
-          <Txt label variant="tiny">
-            {g.label}
-          </Txt>
-          <View style={styles.grid}>
-            {g.items.map((s, si) => (
-              <Appear key={s} index={offsets[gi] + si} style={styles.slot}>
-                <Chip label={timeOf(s, tz)} selected={s === selected} onPress={() => onSelect(s)} />
-              </Appear>
-            ))}
-          </View>
-        </View>
-      ))}
-    </View>
+    <Appear>
+      <WheelPicker items={items} selectedKey={selected} onChange={onSelect} accessibilityLabel="בחירת שעה" />
+      <Txt variant="tiny" faint center style={{ marginTop: spacing.sm }}>
+        {slots.length} שעות פנויות · גוללים לבחירה
+      </Txt>
+    </Appear>
   );
 }
-
-const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  slot: { width: '23%', flexGrow: 0 },
-});

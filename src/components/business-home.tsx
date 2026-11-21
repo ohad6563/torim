@@ -1,61 +1,33 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Redirect, router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { router } from 'expo-router';
 import { Linking, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrowMark } from '@/components/brow-mark';
+import { MyAppointmentCard } from '@/components/my-appointment-card';
 import { Appear, Button, Card, EmptyState, IconButton, Loading, Row, Txt } from '@/components/ui';
+import { useAuth } from '@/context/auth';
+import { useMyAppointments } from '@/hooks/use-my-appointments';
 import { usePublicBusiness } from '@/hooks/use-public-business';
-import { dayOf, formatDayLong, formatDuration, formatPhone, formatPrice, timeOf, timeRange, todayIn, WEEKDAYS, weekdayOf } from '@/lib/dates';
+import { formatDuration, formatPhone, formatPrice, timeRange, todayIn, WEEKDAYS, weekdayOf } from '@/lib/dates';
 import { whatsappUrl } from '@/lib/links';
-import { getMyTokens, removeMyToken } from '@/lib/my-appointments';
-import { supabase } from '@/lib/supabase';
-import type { PublicAppointment } from '@/lib/types';
 import { colors, MAX_WIDTH, radius, spacing } from '@/theme';
 
 /**
  * The customer-facing home of a business: brand hero with the signature brow
- * animation, upcoming appointments booked on this device, services, hours and contact.
+ * animation, the customer's next appointment, services, hours and contact.
  */
-export function BusinessHome({ slug, showOwnerEntry = false }: { slug: string; showOwnerEntry?: boolean }) {
+export function BusinessHome({ slug }: { slug: string }) {
   const { data, loading } = usePublicBusiness(slug);
-  const [mine, setMine] = useState<PublicAppointment[]>([]);
+  const { profile } = useAuth();
+  const { upcoming } = useMyAppointments(slug);
   const { width } = useWindowDimensions();
   const wide = width >= 900;
-
-  // Refresh "my appointments" whenever the screen is shown (e.g. after booking).
-  useFocusEffect(
-    useCallback(() => {
-      let cancelled = false;
-      (async () => {
-        const tokens = await getMyTokens();
-        const rows = await Promise.all(
-          tokens.map(async (token) => {
-            const { data: r } = await supabase.rpc('get_appointment_by_token', { p_token: token });
-            const appt = (Array.isArray(r) ? r[0] : r) as PublicAppointment | undefined;
-            if (!appt) await removeMyToken(token); // deleted by the business
-            return appt ? { ...appt, token } : null;
-          }),
-        );
-        const now = Date.now();
-        const upcoming = rows
-          .filter((a): a is PublicAppointment & { token: string } => !!a)
-          .filter((a) => a.status === 'booked' && new Date(a.ends_at).getTime() > now)
-          .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
-        if (!cancelled) setMine(upcoming);
-      })();
-      return () => {
-        cancelled = true;
-      };
-    }, []),
-  );
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0];
 
   if (loading) return <Loading />;
   if (!data) {
-    // In the single-studio app, before the studio has been set up, show the owner's welcome instead.
-    if (showOwnerEntry) return <Redirect href="/welcome" />;
     return (
       <SafeAreaView style={styles.screen}>
         <EmptyState icon="search-outline" title="העסק לא נמצא" message="ייתכן שהקישור שגוי או שהעסק שינה את הכתובת." />
@@ -72,7 +44,12 @@ export function BusinessHome({ slug, showOwnerEntry = false }: { slug: string; s
 
   const hero = (
     <View style={[styles.hero, wide && styles.heroWide]}>
-      <Animated.View entering={FadeIn.duration(900)}>
+      <Animated.View entering={FadeIn.duration(900)} style={{ gap: spacing.xs }}>
+        {firstName ? (
+          <Txt muted center>
+            היי {firstName} 👋
+          </Txt>
+        ) : null}
         <Txt label variant="tiny" center>
           {business.category ? `${business.category} · ` : ''}
           {business.address?.split(',').pop()?.trim() || 'סטודיו'}
@@ -120,33 +97,14 @@ export function BusinessHome({ slug, showOwnerEntry = false }: { slug: string; s
 
   const content = (
     <View style={[styles.content, wide && styles.contentWide]}>
-      {mine.length > 0 ? (
+      {upcoming.length > 0 ? (
         <Appear delay={300}>
           <Txt label variant="tiny" style={styles.sectionLabel}>
-            התורים שלי
+            התור הבא שלך
           </Txt>
           <View style={{ gap: spacing.sm }}>
-            {mine.map((a) => (
-              <Card
-                key={a.id}
-                style={styles.myAppt}
-                onPress={() => router.push({ pathname: '/a/[token]', params: { token: (a as PublicAppointment & { token: string }).token } })}
-                accessibilityLabel={`תור ל${a.service_name}`}>
-                <Row gap={spacing.md}>
-                  <View style={styles.myApptDate}>
-                    <Txt variant="h2" color={colors.textOnPrimary}>
-                      {timeOf(a.starts_at, tz)}
-                    </Txt>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Txt bold>{a.service_name}</Txt>
-                    <Txt variant="small" muted>
-                      {formatDayLong(dayOf(a.starts_at, tz))}
-                    </Txt>
-                  </View>
-                  <Ionicons name="chevron-back" size={18} color={colors.textMuted} />
-                </Row>
-              </Card>
+            {upcoming.slice(0, 2).map((a) => (
+              <MyAppointmentCard key={a.id} appt={a} />
             ))}
           </View>
         </Appear>
@@ -243,13 +201,6 @@ export function BusinessHome({ slug, showOwnerEntry = false }: { slug: string; s
             מדיניות פרטיות
           </Txt>
         </Pressable>
-        {showOwnerEntry ? (
-          <Pressable onPress={() => router.push('/login')} accessibilityRole="link" hitSlop={8}>
-            <Txt variant="tiny" faint>
-              כניסת בעלת העסק
-            </Txt>
-          </Pressable>
-        ) : null}
       </View>
     </View>
   );

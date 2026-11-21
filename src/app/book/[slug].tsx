@@ -17,8 +17,10 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DateStrip } from '@/components/date-strip';
+import { withAccount } from '@/components/owner-gate';
 import { SlotGrid } from '@/components/slot-grid';
 import { Appear, Button, EmptyState, ErrorBox, Field, IconButton, Loading, Row, Screen, Txt } from '@/components/ui';
+import { useAuth } from '@/context/auth';
 import { usePublicBusiness } from '@/hooks/use-public-business';
 import { useSlots } from '@/hooks/use-slots';
 import {
@@ -34,7 +36,6 @@ import {
 } from '@/lib/dates';
 import { errorMessage } from '@/lib/errors';
 import { haptics } from '@/lib/haptics';
-import { addMyToken } from '@/lib/my-appointments';
 import { supabase } from '@/lib/supabase';
 import type { Service } from '@/lib/types';
 import { colors, radius, spacing, springs } from '@/theme';
@@ -49,7 +50,8 @@ const STEP_TITLES: Record<Step, string> = {
 };
 
 /** Customer booking flow: service → date & time → details → confirmation. No account needed. */
-export default function BookFlow() {
+function BookFlow() {
+  const { profile } = useAuth();
   const params = useLocalSearchParams<{ slug: string; service?: string }>();
   const { data, loading } = usePublicBusiness(params.slug);
 
@@ -57,8 +59,9 @@ export default function BookFlow() {
   const [serviceId, setServiceId] = useState<string | null>(params.service ?? null);
   const [pickedDay, setPickedDay] = useState('');
   const [slot, setSlot] = useState<string | null>(null);
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  // Pre-filled from the account; editable in case the booking is for someone else.
+  const [name, setName] = useState(profile?.full_name ?? '');
+  const [phone, setPhone] = useState(profile?.phone ?? '');
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,7 +100,7 @@ export default function BookFlow() {
     if (step === 'details') setStep('time');
     else if (step === 'time' && !params.service) setStep('service');
     else if (router.canGoBack()) router.back();
-    else router.replace('/');
+    else router.replace('/home');
   }
 
   function pickService(s: Service) {
@@ -132,7 +135,6 @@ export default function BookFlow() {
     }
     const row = Array.isArray(res) ? res[0] : res;
     const t: string | null = row?.cancel_token ?? null;
-    if (t) await addMyToken(t);
     setToken(t);
     haptics.success();
     setStep('done');
@@ -352,17 +354,13 @@ function Success({
         ) : null}
       </Animated.View>
       <Animated.View entering={FadeIn.delay(800).duration(600)} style={styles.successActions}>
+        <Button title="סיום" onPress={() => router.replace('/home')} />
+        <Button title="התורים שלי" variant="secondary" onPress={() => router.replace('/appointments')} />
         {token ? (
-          <Button
-            title="פרטי התור"
-            variant="secondary"
-            onPress={() => router.replace({ pathname: '/a/[token]', params: { token } })}
-          />
+          <Txt variant="tiny" faint center>
+            אפשר לצפות בתור או לבטל אותו בכל רגע תחת ״התורים שלי״.
+          </Txt>
         ) : null}
-        <Button title="סיום" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
-        <Txt variant="tiny" faint center>
-          התור נשמר במכשיר הזה תחת ״התורים שלי״.
-        </Txt>
       </Animated.View>
     </SafeAreaView>
   );
@@ -414,3 +412,5 @@ const styles = StyleSheet.create({
   },
   successActions: { width: '100%', maxWidth: 360, gap: spacing.md, marginTop: spacing.lg },
 });
+
+export default withAccount(BookFlow);

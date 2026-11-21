@@ -75,7 +75,7 @@ function Stroke({
   return (
     <AnimatedPath
       d={cubic(c)}
-      stroke={colors.text}
+      stroke={colors.accent}
       strokeOpacity={opacity}
       strokeWidth={width}
       strokeLinecap="round"
@@ -117,7 +117,7 @@ export function BrowMark({ width = 160, style }: { width?: number; style?: Style
         <Svg width="100%" height="100%" viewBox="283 296 470 430">
           <Stroke c={ARCH_TOP} width={5} delay={0} duration={1000} />
           <Stroke c={ARCH_BOTTOM} width={5} delay={120} duration={1000} />
-          <AnimatedPath d={ARCH_FILL} fill={colors.text} animatedProps={fillProps} />
+          <AnimatedPath d={ARCH_FILL} fill={colors.accent} animatedProps={fillProps} />
           <Stroke c={line(716, 420, 708)} width={40} delay={900} duration={650} />
           <Stroke c={line(340, 548, 708)} width={40} delay={1200} duration={500} />
           {HAIRS.map((c, i) => (

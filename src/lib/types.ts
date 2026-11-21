@@ -81,3 +81,25 @@ export type PublicAppointment = {
   business_address: string | null;
   timezone: string;
 };
+
+export type Profile = {
+  id: string;
+  full_name: string | null;
+  phone: string | null;
+  username: string | null;
+};
+
+export type MyAppointment = {
+  id: string;
+  cancel_token: string;
+  starts_at: string;
+  ends_at: string;
+  status: AppointmentStatus;
+  service_name: string;
+  price: number | null;
+  business_name: string;
+  business_slug: string;
+  business_phone: string | null;
+  business_address: string | null;
+  timezone: string;
+};

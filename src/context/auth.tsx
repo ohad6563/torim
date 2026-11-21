@@ -2,13 +2,18 @@ import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
-import type { Business } from '@/lib/types';
+import type { Business, Profile } from '@/lib/types';
 
 type AuthState = {
-  /** True until the stored session (and the owner's business) have been loaded. */
+  /** True until the stored session, profile and managed business have been loaded. */
   loading: boolean;
   session: Session | null;
+  profile: Profile | null;
+  /** The business this account manages (owner or admin). Null for customers. */
   business: Business | null;
+  isAdmin: boolean;
+  refresh: () => Promise<void>;
+  /** @deprecated use refresh */
   refreshBusiness: () => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -17,19 +22,26 @@ const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const loadedUserRef = useRef<string | null | undefined>(undefined);
 
-  const loadBusiness = useCallback(async (s: Session | null) => {
+  const loadAccount = useCallback(async (s: Session | null) => {
     if (!s) {
       setBusiness(null);
+      setProfile(null);
       return;
     }
     setLoading(true);
     try {
-      const { data } = await supabase.from('businesses').select('*').eq('owner_id', s.user.id).maybeSingle();
-      setBusiness((data as Business | null) ?? null);
+      const [biz, prof] = await Promise.all([
+        supabase.rpc('my_business'),
+        supabase.from('profiles').select('*').eq('id', s.user.id).maybeSingle(),
+      ]);
+      const rows = (biz.data ?? []) as Business[];
+      setBusiness(rows[0] ?? null);
+      setProfile((prof.data as Profile | null) ?? null);
     } finally {
       setLoading(false);
     }
@@ -39,17 +51,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured) return;
     let active = true;
 
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!active) return;
-      loadedUserRef.current = data.session?.user.id ?? null;
-      setSession(data.session);
-      await loadBusiness(data.session);
-      if (active) setLoading(false);
-    }).catch(() => {
-      if (active) setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(async ({ data }) => {
+        if (!active) return;
+        loadedUserRef.current = data.session?.user.id ?? null;
+        setSession(data.session);
+        await loadAccount(data.session);
+        if (active) setLoading(false);
+      })
+      .catch(() => {
+        if (active) setLoading(false);
+      });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       const userId = s?.user.id ?? null;
       // Supabase re-emits SIGNED_IN for the same user (e.g. when a browser tab regains focus).
@@ -57,27 +72,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loadedUserRef.current = userId;
       if (s) setLoading(true);
       // Avoid calling Supabase synchronously inside the auth callback (it can deadlock).
-      setTimeout(() => loadBusiness(s), 0);
+      setTimeout(() => loadAccount(s), 0);
     });
 
     return () => {
       active = false;
       sub.subscription.unsubscribe();
     };
-  }, [loadBusiness]);
+  }, [loadAccount]);
 
   const value = useMemo<AuthState>(
     () => ({
       loading,
       session,
+      profile,
       business,
-      refreshBusiness: () => loadBusiness(session),
+      isAdmin: business !== null,
+      refresh: () => loadAccount(session),
+      refreshBusiness: () => loadAccount(session),
       signOut: async () => {
         await supabase.auth.signOut();
         setBusiness(null);
+        setProfile(null);
       },
     }),
-    [loading, session, business, loadBusiness],
+    [loading, session, profile, business, loadAccount],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -89,7 +108,7 @@ export function useAuth() {
   return ctx;
 }
 
-/** For screens inside the owner area, where a business is guaranteed to exist. */
+/** For screens inside the admin area, where a business is guaranteed to exist. */
 export function useBusiness(): Business {
   const { business } = useAuth();
   if (!business) throw new Error('useBusiness used without a business');
