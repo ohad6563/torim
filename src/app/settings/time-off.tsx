@@ -18,7 +18,7 @@ import {
 } from '@/components/ui';
 import { useBusiness } from '@/context/auth';
 import { useFocusData } from '@/hooks/use-focus-data';
-import { addDays, dayOf, formatDayLong, isValidTime, timeOf, todayIn } from '@/lib/dates';
+import { addDays, dayOf, formatDayLong, isValidTime, timeOf, timeRange, todayIn } from '@/lib/dates';
 import { confirm } from '@/lib/dialogs';
 import { errorMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
@@ -88,7 +88,7 @@ function TimeOffScreen() {
     const eDay = endsAtMidnight ? addDays(dayOf(t.ends_at, tz), -1) : dayOf(t.ends_at, tz);
     const allDay = timeOf(t.starts_at, tz) === '00:00' && endsAtMidnight;
     if (allDay) return sDay === eDay ? `${formatDayLong(sDay)} · כל היום` : `${formatDayLong(sDay)} – ${formatDayLong(eDay)}`;
-    if (sDay === eDay) return `${formatDayLong(sDay)} · ${timeOf(t.starts_at, tz)}–${timeOf(t.ends_at, tz)}`;
+    if (sDay === eDay) return `${formatDayLong(sDay)} · ${timeRange(timeOf(t.starts_at, tz), timeOf(t.ends_at, tz))}`;
     return `${formatDayLong(sDay)} ${timeOf(t.starts_at, tz)} – ${formatDayLong(eDay)} ${timeOf(t.ends_at, tz)}`;
   }
 

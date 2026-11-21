@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 
 import { Loading, type IconName } from '@/components/ui';
 import { useAuth } from '@/context/auth';
-import { colors } from '@/theme';
+import { colors, family } from '@/theme';
 
 const TABS: { name: string; title: string; icon: IconName }[] = [
   { name: 'calendar', title: 'יומן', icon: 'calendar-outline' },
@@ -25,15 +25,15 @@ export default function OwnerLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.background,
           borderTopColor: colors.border,
           // The default web height clips Hebrew labels.
           ...(Platform.OS === 'web' ? { height: 62, paddingTop: 4, paddingBottom: 6 } : null),
         },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '600', lineHeight: 16 },
-        headerStyle: { backgroundColor: colors.surface },
+        tabBarLabelStyle: { fontSize: 11, fontFamily: family.medium, lineHeight: 16 },
+        headerStyle: { backgroundColor: colors.background },
         headerShadowVisible: false,
-        headerTitleStyle: { color: colors.text, fontWeight: '700' },
+        headerTitleStyle: { color: colors.text, fontFamily: family.semibold, fontSize: 17 },
         headerTitleAlign: 'center',
         sceneStyle: { backgroundColor: colors.background },
       }}>

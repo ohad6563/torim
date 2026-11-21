@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { type ComponentProps, type ReactNode } from 'react';
+import { useEffect, type ComponentProps, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -17,11 +17,66 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import Animated, {
+  Easing,
+  FadeInDown,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { colors, font, MAX_WIDTH, radius, shadow, spacing } from '@/theme';
+import { haptics } from '@/lib/haptics';
+import { colors, family, font, MAX_WIDTH, radius, spacing, springs } from '@/theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+/** Shared "press" feel: a quick spring scale-down, so every tap feels physical. */
+function usePressScale(to = 0.97) {
+  const scale = useSharedValue(1);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return {
+    style,
+    onPressIn: () => {
+      scale.set(withSpring(to, springs.press));
+    },
+    onPressOut: () => {
+      scale.set(withSpring(1, springs.press));
+    },
+  };
+}
+
+// ---------- Motion helpers ----------
+
+/** Fades and lifts its children in. Pass `index` to stagger items in a list. */
+export function Appear({
+  children,
+  index = 0,
+  delay = 0,
+  style,
+}: {
+  children: ReactNode;
+  index?: number;
+  delay?: number;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return (
+    <Animated.View
+      entering={FadeInDown.duration(520)
+        .delay(delay + Math.min(index, 12) * 55)
+        .easing(Easing.out(Easing.cubic))}
+      style={style}>
+      {children}
+    </Animated.View>
+  );
+}
 
 // ---------- Layout ----------
 
@@ -33,6 +88,7 @@ type ScreenProps = {
   edges?: Edge[];
   footer?: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
+  wide?: boolean;
 };
 
 /** Page wrapper: safe area, keyboard handling, centred max-width column. */
@@ -44,8 +100,9 @@ export function Screen({
   edges = ['bottom'],
   footer,
   contentStyle,
+  wide,
 }: ScreenProps) {
-  const inner = <View style={[styles.column, contentStyle]}>{children}</View>;
+  const inner = <View style={[styles.column, wide && { maxWidth: 1080 }, contentStyle]}>{children}</View>;
   return (
     <SafeAreaView style={styles.screen} edges={edges}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -53,8 +110,12 @@ export function Screen({
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            indicatorStyle="white"
             refreshControl={
-              onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={colors.primary} /> : undefined
+              onRefresh ? (
+                <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={colors.text} />
+              ) : undefined
             }>
             {inner}
           </ScrollView>
@@ -71,19 +132,44 @@ export function Screen({
   );
 }
 
-export function Row({ children, style, gap = spacing.sm }: { children: ReactNode; style?: StyleProp<ViewStyle>; gap?: number }) {
+export function Row({
+  children,
+  style,
+  gap = spacing.sm,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  gap?: number;
+}) {
   return <View style={[{ flexDirection: 'row', alignItems: 'center', gap }, style]}>{children}</View>;
 }
 
-export function Card({ children, style, onPress }: { children: ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void }) {
+export function Card({
+  children,
+  style,
+  onPress,
+  accessibilityLabel,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  onPress?: () => void;
+  accessibilityLabel?: string;
+}) {
+  const press = usePressScale(0.98);
   if (onPress) {
     return (
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [styles.card, pressed && styles.pressed, style]}
-        accessibilityRole="button">
+      <AnimatedPressable
+        onPress={() => {
+          haptics.tap();
+          onPress();
+        }}
+        onPressIn={press.onPressIn}
+        onPressOut={press.onPressOut}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        style={[styles.card, style, press.style]}>
         {children}
-      </Pressable>
+      </AnimatedPressable>
     );
   }
   return <View style={[styles.card, style]}>{children}</View>;
@@ -91,28 +177,64 @@ export function Card({ children, style, onPress }: { children: ReactNode; style?
 
 // ---------- Text ----------
 
+type Variant = 'display' | 'h1' | 'h2' | 'h3' | 'body' | 'small' | 'tiny';
+type Weight = keyof typeof family;
+
+const VARIANT_WEIGHT: Record<Variant, Weight> = {
+  display: 'light',
+  h1: 'bold',
+  h2: 'semibold',
+  h3: 'semibold',
+  body: 'regular',
+  small: 'regular',
+  tiny: 'medium',
+};
+
 type TxtProps = {
   children: ReactNode;
-  variant?: 'h1' | 'h2' | 'h3' | 'body' | 'small' | 'tiny';
+  variant?: Variant;
   muted?: boolean;
+  faint?: boolean;
   bold?: boolean;
+  weight?: Weight;
   color?: string;
   center?: boolean;
   style?: StyleProp<TextStyle>;
   numberOfLines?: number;
+  /** Small caps-like label: tracked out, muted. */
+  label?: boolean;
 };
 
-export function Txt({ children, variant = 'body', muted, bold, color, center, style, numberOfLines }: TxtProps) {
-  const isHeading = variant === 'h1' || variant === 'h2' || variant === 'h3';
+export function Txt({
+  children,
+  variant = 'body',
+  muted,
+  faint,
+  bold,
+  weight,
+  color,
+  center,
+  style,
+  numberOfLines,
+  label,
+}: TxtProps) {
+  const size = font[variant];
+  const w = weight ?? (bold ? 'semibold' : VARIANT_WEIGHT[variant]);
   return (
     <Text
       numberOfLines={numberOfLines}
+      maxFontSizeMultiplier={variant === 'display' ? 1.2 : 1.6}
       style={[
         styles.text,
-        { fontSize: font[variant], lineHeight: Math.round(font[variant] * 1.4) },
-        isHeading && styles.heading,
-        bold && styles.bold,
+        {
+          fontSize: size,
+          lineHeight: Math.round(size * (variant === 'display' ? 1.08 : 1.42)),
+          fontFamily: family[w],
+        },
+        variant === 'display' && { letterSpacing: -0.5 },
+        label && styles.label,
         muted && { color: colors.textMuted },
+        faint && { color: colors.textFaint },
         color ? { color } : null,
         center && { textAlign: 'center' },
         style,
@@ -133,64 +255,94 @@ type ButtonProps = {
   disabled?: boolean;
   small?: boolean;
   style?: StyleProp<ViewStyle>;
+  accessibilityLabel?: string;
 };
 
-export function Button({ title, onPress, variant = 'primary', icon, loading, disabled, small, style }: ButtonProps) {
+export function Button({
+  title,
+  onPress,
+  variant = 'primary',
+  icon,
+  loading,
+  disabled,
+  small,
+  style,
+  accessibilityLabel,
+}: ButtonProps) {
+  const press = usePressScale(0.96);
   const palette = {
     primary: { bg: colors.primary, fg: colors.textOnPrimary, border: colors.primary },
-    secondary: { bg: colors.surface, fg: colors.primary, border: colors.primary },
-    ghost: { bg: 'transparent', fg: colors.primary, border: 'transparent' },
-    danger: { bg: colors.surface, fg: colors.danger, border: colors.danger },
+    secondary: { bg: 'transparent', fg: colors.text, border: colors.borderStrong },
+    ghost: { bg: 'transparent', fg: colors.text, border: 'transparent' },
+    danger: { bg: 'transparent', fg: colors.danger, border: colors.dangerSoft },
   }[variant];
   const isDisabled = disabled || loading;
   return (
-    <Pressable
-      onPress={onPress}
+    <AnimatedPressable
+      onPress={() => {
+        haptics.tap();
+        onPress?.();
+      }}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       disabled={isDisabled}
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? title}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
-      style={({ pressed }) => [
+      style={[
         styles.button,
         small && styles.buttonSmall,
         { backgroundColor: palette.bg, borderColor: palette.border },
-        pressed && styles.pressed,
         isDisabled && styles.disabled,
         style,
+        press.style,
       ]}>
       {loading ? (
         <ActivityIndicator color={palette.fg} />
       ) : (
         <Row gap={spacing.sm} style={{ justifyContent: 'center' }}>
-          {icon ? <Ionicons name={icon} size={small ? 16 : 20} color={palette.fg} /> : null}
-          <Text style={[styles.buttonText, small && { fontSize: font.small }, { color: palette.fg }]}>{title}</Text>
+          {icon ? <Ionicons name={icon} size={small ? 16 : 19} color={palette.fg} /> : null}
+          <Text
+            maxFontSizeMultiplier={1.4}
+            style={[styles.buttonText, small && { fontSize: font.small }, { color: palette.fg }]}>
+            {title}
+          </Text>
         </Row>
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
 export function IconButton({
   icon,
   onPress,
-  color = colors.primary,
+  color = colors.text,
   label,
   size = 22,
+  filled,
 }: {
   icon: IconName;
   onPress: () => void;
   color?: string;
   label: string;
   size?: number;
+  filled?: boolean;
 }) {
+  const press = usePressScale(0.88);
   return (
-    <Pressable
-      onPress={onPress}
+    <AnimatedPressable
+      onPress={() => {
+        haptics.tap();
+        onPress();
+      }}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={8}
-      style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
+      style={[styles.iconButton, filled && styles.iconButtonFilled, press.style]}>
       <Ionicons name={icon} size={size} color={color} />
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -198,17 +350,36 @@ export function IconButton({
 
 type FieldProps = TextInputProps & { label: string; error?: string | null; hint?: string };
 
-export function Field({ label, error, hint, style, ...props }: FieldProps) {
+/** Text field whose border lights up on focus. */
+export function Field({ label, error, hint, style, onFocus, onBlur, ...props }: FieldProps) {
+  const focus = useSharedValue(0);
+  const borderStyle = useAnimatedStyle(() => ({
+    borderColor: error ? colors.danger : interpolateColor(focus.value, [0, 1], [colors.border, colors.text]),
+  }));
   return (
     <View style={styles.field}>
-      <Txt variant="small" bold>
+      <Txt variant="small" muted weight="medium">
         {label}
       </Txt>
-      <TextInput
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, props.multiline && styles.inputMultiline, error ? styles.inputError : null, style]}
-        {...props}
-      />
+      <Animated.View style={[styles.inputWrap, props.multiline && styles.inputMultiline, borderStyle]}>
+        <TextInput
+          placeholderTextColor={colors.textFaint}
+          selectionColor={colors.text}
+          cursorColor={colors.text}
+          keyboardAppearance="dark"
+          maxFontSizeMultiplier={1.6}
+          onFocus={(e) => {
+            focus.set(withTiming(1, { duration: 180 }));
+            onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            focus.set(withTiming(0, { duration: 180 }));
+            onBlur?.(e);
+          }}
+          style={[styles.input, props.multiline && styles.inputMultilineText, style]}
+          {...props}
+        />
+      </Animated.View>
       {error ? (
         <Txt variant="tiny" color={colors.danger}>
           {error}
@@ -222,6 +393,7 @@ export function Field({ label, error, hint, style, ...props }: FieldProps) {
   );
 }
 
+/** Pill that animates between outlined and filled when selected. */
 export function Chip({
   label,
   selected,
@@ -235,21 +407,31 @@ export function Chip({
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
+  const press = usePressScale(0.94);
+  const on = useSharedValue(selected ? 1 : 0);
+  useEffect(() => {
+    on.set(withTiming(selected ? 1 : 0, { duration: 200 }));
+  }, [selected, on]);
+  const fill = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(on.value, [0, 1], [colors.surface, colors.primary]),
+    borderColor: interpolateColor(on.value, [0, 1], [colors.border, colors.primary]),
+  }));
   return (
-    <Pressable
-      onPress={onPress}
+    <AnimatedPressable
+      onPress={() => {
+        haptics.select();
+        onPress?.();
+      }}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityState={{ selected, disabled }}
-      style={({ pressed }) => [
-        styles.chip,
-        selected && styles.chipSelected,
-        pressed && styles.pressed,
-        disabled && styles.disabled,
-        style,
-      ]}>
-      <Text style={[styles.chipText, selected && { color: colors.textOnPrimary }]}>{label}</Text>
-    </Pressable>
+      style={[styles.chip, fill, disabled && styles.disabled, style, press.style]}>
+      <Text maxFontSizeMultiplier={1.4} style={[styles.chipText, selected && { color: colors.textOnPrimary }]}>
+        {label}
+      </Text>
+    </AnimatedPressable>
   );
 }
 
@@ -259,10 +441,14 @@ export function Toggle({ value, onValueChange }: { value: boolean; onValueChange
     <View style={Platform.OS === 'web' ? styles.ltr : undefined}>
       <Switch
         value={value}
-        onValueChange={onValueChange}
-        trackColor={{ true: colors.primary, false: colors.border }}
-        thumbColor={colors.surface}
-        {...(Platform.OS === 'web' ? { activeThumbColor: colors.surface } : null)}
+        onValueChange={(v) => {
+          haptics.select();
+          onValueChange(v);
+        }}
+        trackColor={{ true: colors.primary, false: colors.borderStrong }}
+        thumbColor={value ? colors.background : colors.textMuted}
+        ios_backgroundColor={colors.borderStrong}
+        {...(Platform.OS === 'web' ? { activeThumbColor: colors.background } : null)}
       />
     </View>
   );
@@ -270,13 +456,40 @@ export function Toggle({ value, onValueChange }: { value: boolean; onValueChange
 
 // ---------- Feedback ----------
 
+/** Three breathing dots: calmer than a spinner and on-brand. */
 export function Loading({ label }: { label?: string }) {
   return (
-    <View style={styles.center}>
-      <ActivityIndicator size="large" color={colors.primary} />
+    <View style={styles.center} accessibilityRole="progressbar" accessibilityLabel={label ?? 'טוען'}>
+      <Row gap={spacing.sm}>
+        {[0, 1, 2].map((i) => (
+          <Dot key={i} delay={i * 160} />
+        ))}
+      </Row>
       {label ? <Txt muted>{label}</Txt> : null}
     </View>
   );
+}
+
+function Dot({ delay }: { delay: number }) {
+  const v = useSharedValue(0.25);
+  useEffect(() => {
+    v.set(withDelay(
+      delay,
+      withRepeat(withSequence(withTiming(1, { duration: 420 }), withTiming(0.25, { duration: 420 })), -1),
+    ));
+  }, [delay, v]);
+  const style = useAnimatedStyle(() => ({ opacity: v.value, transform: [{ scale: 0.7 + v.value * 0.3 }] }));
+  return <Animated.View style={[styles.dot, style]} />;
+}
+
+/** Placeholder block with a slow shimmer, for content that is loading. */
+export function Skeleton({ height = 72, style }: { height?: number; style?: StyleProp<ViewStyle> }) {
+  const v = useSharedValue(0.4);
+  useEffect(() => {
+    v.set(withRepeat(withTiming(1, { duration: 900, easing: Easing.inOut(Easing.quad) }), -1, true));
+  }, [v]);
+  const anim = useAnimatedStyle(() => ({ opacity: v.value }));
+  return <Animated.View style={[styles.skeleton, { height }, anim, style]} />;
 }
 
 export function EmptyState({
@@ -291,9 +504,9 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <View style={styles.empty}>
+    <Appear style={styles.empty}>
       <View style={styles.emptyIcon}>
-        <Ionicons name={icon} size={32} color={colors.primary} />
+        <Ionicons name={icon} size={28} color={colors.text} />
       </View>
       <Txt variant="h3" center>
         {title}
@@ -304,19 +517,27 @@ export function EmptyState({
         </Txt>
       ) : null}
       {action}
-    </View>
+    </Appear>
   );
 }
 
 export function ErrorBox({ message }: { message: string | null | undefined }) {
+  useEffect(() => {
+    if (message) haptics.warning();
+  }, [message]);
   if (!message) return null;
   return (
-    <View style={styles.errorBox} accessibilityRole="alert">
-      <Ionicons name="alert-circle" size={20} color={colors.danger} />
+    <Animated.View
+      key={message}
+      entering={FadeInDown.duration(260)}
+      style={styles.errorBox}
+      accessibilityRole="alert"
+      accessibilityLiveRegion="polite">
+      <Ionicons name="alert-circle-outline" size={20} color={colors.danger} />
       <Txt variant="small" color={colors.danger} style={styles.flex}>
         {message}
       </Txt>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -344,7 +565,7 @@ const styles = StyleSheet.create({
   footer: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
@@ -353,61 +574,64 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     borderColor: colors.border,
     gap: spacing.sm,
-    ...shadow,
   },
-  pressed: { opacity: 0.7 },
-  disabled: { opacity: 0.45 },
+  disabled: { opacity: 0.35 },
   text: { color: colors.text, writingDirection: 'rtl' },
-  heading: { fontWeight: '700' },
-  bold: { fontWeight: '600' },
+  label: { letterSpacing: 1.6, color: colors.textMuted, fontFamily: family.medium },
   button: {
-    minHeight: 50,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    paddingHorizontal: spacing.lg,
+    minHeight: 54,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    paddingHorizontal: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonSmall: { minHeight: 38, paddingHorizontal: spacing.md },
-  buttonText: { fontSize: font.body, fontWeight: '600' },
+  buttonSmall: { minHeight: 40, paddingHorizontal: spacing.lg },
+  buttonText: { fontSize: font.body, fontFamily: family.semibold },
   iconButton: { padding: spacing.sm, borderRadius: radius.pill },
-  field: { gap: spacing.xs },
-  input: {
-    minHeight: 50,
+  iconButtonFilled: { backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border },
+  field: { gap: spacing.xs + 2 },
+  inputWrap: {
+    minHeight: 54,
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
+    justifyContent: 'center',
+  },
+  input: {
+    minHeight: 52,
+    paddingHorizontal: spacing.lg,
     fontSize: font.body,
+    fontFamily: family.regular,
     color: colors.text,
     // Native apps run in forced-RTL mode, where the default alignment is already right.
-    ...(Platform.OS === 'web' ? { textAlign: 'right' as const } : null),
+    ...(Platform.OS === 'web' ? { textAlign: 'right' as const, outlineStyle: 'none' as never } : null),
     writingDirection: 'rtl',
   },
-  inputMultiline: { minHeight: 90, paddingTop: spacing.md, textAlignVertical: 'top' },
-  inputError: { borderColor: colors.danger },
+  inputMultiline: { minHeight: 100 },
+  inputMultilineText: { minHeight: 98, paddingTop: spacing.md, textAlignVertical: 'top' },
   chip: {
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm + 2,
+    paddingVertical: spacing.sm + 3,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
     alignItems: 'center',
   },
-  chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { fontSize: font.small, fontWeight: '600', color: colors.text },
+  chipText: { fontSize: font.small, fontFamily: family.medium, color: colors.text },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.text },
+  skeleton: { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg },
   empty: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xxl, paddingHorizontal: spacing.lg },
   emptyIcon: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -422,3 +646,4 @@ const styles = StyleSheet.create({
   sectionTitle: { marginTop: spacing.sm },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
 });
+

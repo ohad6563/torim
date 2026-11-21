@@ -1,8 +1,12 @@
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
-import { Txt } from '@/components/ui';
-import { dayNumber, WEEKDAYS_SHORT, weekdayOf } from '@/lib/dates';
-import { colors, radius, spacing } from '@/theme';
+import { dayNumber, monthName, WEEKDAYS_SHORT, weekdayOf } from '@/lib/dates';
+import { haptics } from '@/lib/haptics';
+import { colors, family, font, radius, spacing, springs } from '@/theme';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
  * Row of days to pick from. `marked` days get a small dot.
@@ -23,38 +27,19 @@ export function DateStrip({
   marked?: Set<string>;
   fill?: boolean;
 }) {
-  const items = days.map((day) => {
-        const isSelected = day === selected;
-        const disabled = disabledDays?.has(day);
-        return (
-          <Pressable
-            key={day}
-            onPress={() => onSelect(day)}
-            disabled={disabled}
-            accessibilityRole="button"
-            accessibilityState={{ selected: isSelected, disabled }}
-            style={({ pressed }) => [
-              styles.day,
-              fill && styles.dayFill,
-              isSelected && styles.daySelected,
-              disabled && styles.dayDisabled,
-              pressed && { opacity: 0.7 },
-            ]}>
-            <Txt variant="tiny" bold color={isSelected ? colors.textOnPrimary : colors.textMuted}>
-              {WEEKDAYS_SHORT[weekdayOf(day)]}
-            </Txt>
-            <Txt variant="h3" color={isSelected ? colors.textOnPrimary : colors.text}>
-              {dayNumber(day)}
-            </Txt>
-            <View
-              style={[
-                styles.dot,
-                { backgroundColor: marked?.has(day) ? (isSelected ? colors.textOnPrimary : colors.accent) : 'transparent' },
-              ]}
-            />
-          </Pressable>
-        );
-  });
+  const items = days.map((day, i) => (
+    <Day
+      key={day}
+      day={day}
+      fill={fill}
+      selected={day === selected}
+      disabled={!!disabledDays?.has(day)}
+      marked={!!marked?.has(day)}
+      // Show the month name on the first day of a month (and at the start of a scrolling strip).
+      month={!fill && (i === 0 || day.endsWith('-01')) ? monthName(day) : null}
+      onPress={() => onSelect(day)}
+    />
+  ));
 
   if (fill) return <View style={styles.row}>{items}</View>;
   return (
@@ -64,20 +49,83 @@ export function DateStrip({
   );
 }
 
+function Day({
+  day,
+  selected,
+  disabled,
+  marked,
+  fill,
+  month,
+  onPress,
+}: {
+  day: string;
+  selected: boolean;
+  disabled: boolean;
+  marked: boolean;
+  fill?: boolean;
+  month: string | null;
+  onPress: () => void;
+}) {
+  const on = useSharedValue(selected ? 1 : 0);
+  const scale = useSharedValue(1);
+  useEffect(() => {
+    on.set(withTiming(selected ? 1 : 0, { duration: 220 }));
+    if (selected) scale.set(withSpring(1, springs.bouncy));
+  }, [selected, on, scale]);
+
+  const style = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(on.value, [0, 1], [colors.surface, colors.primary]),
+    borderColor: interpolateColor(on.value, [0, 1], [colors.border, colors.primary]),
+    transform: [{ scale: scale.value }],
+  }));
+  const textColor = selected ? colors.textOnPrimary : colors.text;
+
+  return (
+    <View style={fill ? styles.fillWrap : undefined}>
+      <Text style={styles.month} numberOfLines={1}>
+        {month ?? ' '}
+      </Text>
+      <AnimatedPressable
+        onPress={() => {
+          haptics.select();
+          onPress();
+        }}
+        onPressIn={() => {
+          scale.set(withSpring(0.92, springs.press));
+        }}
+        onPressOut={() => {
+          scale.set(withSpring(1, springs.press));
+        }}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel={`${WEEKDAYS_SHORT[weekdayOf(day)]} ${dayNumber(day)}`}
+        accessibilityState={{ selected, disabled }}
+        style={[styles.day, fill && styles.dayFill, disabled && styles.dayDisabled, style]}>
+        <Text style={[styles.weekday, { color: selected ? colors.textOnPrimary : colors.textMuted }]}>
+          {WEEKDAYS_SHORT[weekdayOf(day)]}
+        </Text>
+        <Text style={[styles.number, { color: textColor }]}>{dayNumber(day)}</Text>
+        <View style={[styles.dot, { backgroundColor: marked ? textColor : 'transparent' }]} />
+      </AnimatedPressable>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.xs },
-  dayFill: { flex: 1, width: undefined },
+  fillWrap: { flex: 1 },
+  month: { fontFamily: family.medium, fontSize: font.tiny, color: colors.textFaint, height: 18, textAlign: 'center' },
   day: {
-    width: 52,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.md,
+    width: 54,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.lg,
     alignItems: 'center',
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
     gap: 2,
   },
-  daySelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-  dayDisabled: { opacity: 0.35 },
-  dot: { width: 5, height: 5, borderRadius: 3 },
+  dayFill: { width: undefined },
+  dayDisabled: { opacity: 0.25 },
+  weekday: { fontFamily: family.medium, fontSize: font.tiny },
+  number: { fontFamily: family.semibold, fontSize: font.h3 },
+  dot: { width: 4, height: 4, borderRadius: 2 },
 });

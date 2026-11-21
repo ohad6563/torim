@@ -122,3 +122,11 @@ export function formatPhone(p: string): string {
   if (/^0\d{8}$/.test(n)) return `${n.slice(0, 2)}-${n.slice(2, 5)}-${n.slice(5)}`;
   return p;
 }
+
+/**
+ * A time range like "09:00–19:00", isolated as left-to-right so Hebrew (RTL)
+ * text around it doesn't flip it into "19:00–09:00".
+ */
+export function timeRange(start: string, end: string): string {
+  return `⁦${trimTime(start)}–${trimTime(end)}⁩`;
+}
