@@ -49,7 +49,7 @@ export default function Profile() {
   async function deleteAccount() {
     const ok = await confirm(
       'מחיקת החשבון',
-      'החשבון ייסגר והפרטים שלך יימחקו. תורים שכבר נקבעו יישארו אצל הסטודיו עד מועדם.',
+      'החשבון ייסגר, השם והטלפון שלך יימחקו מכל רישומי הסטודיו, ותורים עתידיים יבוטלו. אי אפשר לבטל את הפעולה.',
       { confirmText: 'מחיקה', destructive: true },
     );
     if (!ok) return;

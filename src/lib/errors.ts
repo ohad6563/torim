@@ -11,6 +11,8 @@ export function errorMessage(err: unknown): string {
     [/BUSINESS_NOT_FOUND/, 'העסק לא נמצא.'],
     [/NOT_ALLOWED/, 'אין הרשאה לפעולה הזו.'],
     [/NOT_SIGNED_IN/, 'צריך להתחבר כדי לקבוע תור.'],
+    [/TOO_MANY_BOOKINGS/, 'אפשר להחזיק עד 3 תורים עתידיים. לתור נוסף בטלו אחד קיים או צרו קשר עם הסטודיו.'],
+    [/NOTE_TOO_LONG|appointments_notes_len/, 'ההערה ארוכה מדי.'],
     [/PHONE_NOT_VERIFIED/, 'צריך להתחבר עם מספר טלפון מאומת כדי לקבוע תור.'],
     [/Token has expired or is invalid|otp_expired|invalid.*otp/i, 'הקוד שגוי או שפג תוקפו. נסו שוב או בקשו קוד חדש.'],
     [/Unsupported phone provider|phone_provider_disabled|SMS.*(provider|disabled)/i, 'שליחת קודים ב־SMS עדיין לא הופעלה במערכת.'],

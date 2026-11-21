@@ -92,6 +92,7 @@ export default function Settings() {
         מחובר/ת כ־{profile?.username ?? session?.user.email}
       </Txt>
       <Button title="התנתקות" variant="secondary" icon="log-out-outline" onPress={logout} />
+      <Button title="מדיניות פרטיות" variant="ghost" onPress={() => router.push('/privacy')} />
       <Button title="מחיקת החשבון" variant="ghost" onPress={deleteAccount} style={{ opacity: 0.8 }} />
     </Screen>
   );

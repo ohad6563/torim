@@ -3,6 +3,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Business, Service, WorkingHours } from '@/lib/types';
 
+/** The columns the public may read (internal ones like owner_id are not granted). */
+export const PUBLIC_BUSINESS_COLUMNS =
+  'id,name,slug,category,phone,address,description,timezone,slot_interval_min,min_notice_min,max_days_ahead';
+
 export type PublicBusiness = {
   business: Business;
   services: Service[];
@@ -20,7 +24,7 @@ export function usePublicBusiness(slug: string | undefined) {
     (async () => {
       const { data: b } = await supabase
         .from('businesses')
-        .select('*')
+        .select(PUBLIC_BUSINESS_COLUMNS)
         .eq('slug', slug.toLowerCase())
         .maybeSingle();
       if (b) {

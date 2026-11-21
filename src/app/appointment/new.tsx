@@ -90,7 +90,7 @@ function NewAppointment() {
         .from('customers')
         .select('*')
         .eq('business_id', business.id)
-        .or(`name.ilike.%${q}%,phone.ilike.%${q}%`)
+        .or(`name.ilike."%${q.replace(/["\\]/g, '')}%",phone.ilike."%${q.replace(/["\\]/g, '')}%"`)
         .limit(5);
       setMatches((data ?? []) as Customer[]);
     }, 250);
