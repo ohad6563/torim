@@ -17,6 +17,6 @@ export const STUDIO = {
 
 /** Service providers that process data on the studio's behalf (named in the privacy policy). */
 export const PROCESSORS = [
-  { name: 'Supabase', role: 'אחסון מסד הנתונים והתחברות (שרתים מחוץ לישראל)' },
-  { name: 'Twilio', role: 'שליחת קוד האימות ב־SMS (שרתים מחוץ לישראל)' },
+  { name: 'Supabase', role: 'אחסון מסד הנתונים וניהול ההתחברות (שרתים מחוץ לישראל)' },
+  { name: 'Google / Apple', role: 'אימות זהות בכניסה עם חשבון Google או Apple' },
 ];

@@ -19,6 +19,8 @@ export const supabase = createClient(
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: Platform.OS === 'web',
+      // PKCE: the Google sign-in returns a one-time code that is exchanged for a session.
+      flowType: 'pkce',
     },
   },
 );

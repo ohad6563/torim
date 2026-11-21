@@ -1,152 +1,100 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router, useLocalSearchParams, type Href } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
-import Animated, { Easing, FadeInLeft } from 'react-native-reanimated';
+import { useState } from 'react';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AuthHero } from '@/components/auth-hero';
-import { OtpInput, OTP_LENGTH } from '@/components/otp-input';
-import { Button, ErrorBox, Field, Screen, Txt } from '@/components/ui';
+import { SocialButtons } from '@/components/social-buttons';
+import { ErrorBox, Row, Screen, Txt, type IconName } from '@/components/ui';
 import { useAuth } from '@/context/auth';
-import { formatPhone } from '@/lib/dates';
 import { errorMessage } from '@/lib/errors';
 import { haptics } from '@/lib/haptics';
-import { isMobile, toE164 } from '@/lib/identity';
 import { safeNext } from '@/lib/nav';
-import { supabase } from '@/lib/supabase';
-import { spacing } from '@/theme';
+import { signInWithApple, signInWithGoogle } from '@/lib/social-auth';
+import { colors, radius, spacing } from '@/theme';
 
-const RESEND_SECONDS = 45;
+const PERKS: { icon: IconName; text: string }[] = [
+  { icon: 'time-outline', text: 'קביעת תור בכמה שניות, 24/7' },
+  { icon: 'calendar-outline', text: 'כל התורים שלך במקום אחד' },
+  { icon: 'lock-closed-outline', text: 'בלי סיסמאות – כניסה בלחיצה' },
+];
 
 /**
- * The first screen for anyone not signed in. Sign-in and sign-up are the same:
- * enter a mobile number, get a one-time code by SMS, type it in. New numbers
- * get an account automatically (the name is asked right after).
+ * First screen for anyone not signed in: one tap with Google (or Apple on iPhone).
+ * Sign-in and sign-up are the same; new customers add their name and phone right after.
  */
 export default function Login() {
   const { session } = useAuth();
   // Where to go after signing in (e.g. a booking link opened while signed out).
   const next = safeNext(useLocalSearchParams<{ next?: string }>().next);
-  const [step, setStep] = useState<'phone' | 'code'>('phone');
-  const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<'google' | 'apple' | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [shake, setShake] = useState(0);
-  const [resendIn, setResendIn] = useState(0);
-  const sending = useRef(false);
-
-  useEffect(() => {
-    if (resendIn <= 0) return;
-    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [resendIn]);
 
   if (session) return <Redirect href={(next ?? '/') as Href} />;
 
-  async function sendCode() {
-    // A quick double Enter/tap must not send two SMS (state updates are too slow to guard this).
-    if (sending.current) return;
+  async function run(kind: 'google' | 'apple') {
+    if (busy) return;
     setError(null);
-    if (!isMobile(phone)) return setError('הזינו מספר נייד ישראלי, למשל 050-1234567.');
-    sending.current = true;
-    setBusy(true);
-    const { error: err } = await supabase.auth.signInWithOtp({ phone: toE164(phone), options: { channel: 'sms' } });
-    setBusy(false);
-    sending.current = false;
-    if (err) return setError(errorMessage(err));
-    setCode('');
-    setStep('code');
-    setResendIn(RESEND_SECONDS);
-  }
-
-  async function verify(token = code) {
-    setError(null);
-    if (token.length !== OTP_LENGTH) return setError('הקוד מכיל 6 ספרות.');
-    setBusy(true);
-    const { error: err } = await supabase.auth.verifyOtp({ phone: toE164(phone), token, type: 'sms' });
-    setBusy(false);
-    if (err) {
-      setError(errorMessage(err));
-      setShake((n) => n + 1);
-      setCode('');
-      return;
+    setBusy(kind);
+    const res = kind === 'google' ? await signInWithGoogle(next) : await signInWithApple();
+    // On the web, Google sign-in navigates away to Google; keep the spinner until the page leaves.
+    if (res.ok && kind === 'google' && Platform.OS === 'web') return;
+    setBusy(null);
+    if (res.ok) {
+      haptics.success();
+      router.replace((next ?? '/') as Href);
+    } else if (!res.cancelled) {
+      setError(errorMessage(res.error));
     }
-    haptics.success();
-    router.replace((next ?? '/') as Href);
   }
 
   return (
     <Screen
       edges={['top', 'bottom']}
       footer={
-        step === 'phone' ? (
-          <Button title="שליחת קוד" icon="chatbubble-ellipses-outline" onPress={sendCode} loading={busy} />
-        ) : (
-          <Button title="כניסה" onPress={() => verify()} loading={busy} disabled={code.length !== OTP_LENGTH} />
-        )
-      }>
-      <AuthHero subtitle="נכנסים עם מספר הטלפון, בלי סיסמה" />
-
-      {step === 'phone' ? (
-        <Animated.View key="phone" entering={FadeInLeft.duration(380).easing(Easing.out(Easing.cubic))} style={{ gap: spacing.lg }}>
-          <Field
-            label="מספר נייד"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            autoComplete="tel"
-            textContentType="telephoneNumber"
-            placeholder="050-1234567"
-            onSubmitEditing={sendCode}
-            hint="נשלח אליך קוד חד־פעמי ב־SMS"
-          />
-          <ErrorBox message={error} />
-        </Animated.View>
-      ) : (
-        <Animated.View key="code" entering={FadeInLeft.duration(380).easing(Easing.out(Easing.cubic))} style={{ gap: spacing.lg }}>
-          <View style={{ gap: spacing.xs }}>
-            <Txt center>הזינו את הקוד שנשלח ל־</Txt>
-            <Txt variant="h3" center>
-              {`⁦${formatPhone(phone)}⁩`}
+        <>
+          <SocialButtons busy={busy} onGoogle={() => run('google')} onApple={() => run('apple')} />
+          <Pressable onPress={() => router.push('/privacy')} accessibilityRole="link" style={{ paddingTop: spacing.xs }}>
+            <Txt variant="tiny" faint center>
+              בכניסה את/ה מאשר/ת את{' '}
+              <Txt variant="tiny" muted style={{ textDecorationLine: 'underline' }}>
+                מדיניות הפרטיות
+              </Txt>
             </Txt>
-          </View>
-          <OtpInput value={code} onChange={setCode} onComplete={(v) => verify(v)} shake={shake} />
-          <ErrorBox message={error} />
-          <View style={{ gap: spacing.md, alignItems: 'center' }}>
-            {resendIn > 0 ? (
-              <Txt variant="small" faint>
-                אפשר לבקש קוד חדש בעוד {resendIn} שניות
-              </Txt>
-            ) : (
-              <Pressable onPress={sendCode} accessibilityRole="button" hitSlop={8}>
-                <Txt variant="small" muted style={{ textDecorationLine: 'underline' }}>
-                  לא קיבלתי — שליחה מחדש
-                </Txt>
-              </Pressable>
-            )}
-            <Pressable
-              onPress={() => {
-                setStep('phone');
-                setError(null);
-              }}
-              accessibilityRole="button"
-              hitSlop={8}>
-              <Txt variant="small" muted>
-                שינוי מספר
-              </Txt>
-            </Pressable>
-          </View>
-        </Animated.View>
-      )}
+          </Pressable>
+        </>
+      }>
+      <AuthHero subtitle="ברוכים הבאים לסטודיו" />
 
-      <Pressable onPress={() => router.push('/privacy')} accessibilityRole="link">
-        <Txt variant="tiny" faint center>
-          בכניסה את/ה מאשר/ת את{' '}
-          <Txt variant="tiny" muted style={{ textDecorationLine: 'underline' }}>
-            מדיניות הפרטיות
-          </Txt>
-        </Txt>
-      </Pressable>
+      <View style={styles.perks}>
+        {PERKS.map((p, i) => (
+          <Animated.View key={p.text} entering={FadeInDown.delay(900 + i * 120).duration(600)}>
+            <Row gap={spacing.md}>
+              <View style={styles.perkIcon}>
+                <Ionicons name={p.icon} size={18} color={colors.text} />
+              </View>
+              <Txt style={{ flex: 1 }}>{p.text}</Txt>
+            </Row>
+          </Animated.View>
+        ))}
+      </View>
+
+      <ErrorBox message={error} />
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  perks: { gap: spacing.md, paddingHorizontal: spacing.sm, marginTop: spacing.sm },
+  perkIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

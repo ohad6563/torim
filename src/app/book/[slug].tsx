@@ -59,7 +59,7 @@ function BookFlow() {
   const [serviceId, setServiceId] = useState<string | null>(params.service ?? null);
   const [pickedDay, setPickedDay] = useState('');
   const [slot, setSlot] = useState<string | null>(null);
-  // Name pre-filled from the account (editable); the phone is the verified sign-in number.
+  // Name pre-filled from the profile (editable); the phone comes from the profile.
   const [name, setName] = useState(profile?.full_name ?? '');
   const phone = profile?.phone ?? '';
   const [notes, setNotes] = useState('');
@@ -267,8 +267,13 @@ function BookFlow() {
                 <Txt variant="small" muted style={{ flex: 1 }}>
                   טלפון לתור
                 </Txt>
-                <Txt>{`\u2066${formatPhone(phone)}\u2069`}</Txt>
+                <Txt>{phone ? `\u2066${formatPhone(phone)}\u2069` : 'לא הוזן'}</Txt>
               </Row>
+              <Pressable onPress={() => router.push('/profile')} accessibilityRole="link" hitSlop={6}>
+                <Txt variant="tiny" muted>
+                  לשינוי הטלפון: פרופיל ← עריכת פרטים
+                </Txt>
+              </Pressable>
               <Field label="הערה (לא חובה)" value={notes} onChangeText={setNotes} multiline maxLength={300} />
               <ErrorBox message={error} />
               <Pressable onPress={() => router.push('/privacy')} accessibilityRole="link">

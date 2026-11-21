@@ -24,7 +24,7 @@ export default function DeleteAccountInfo() {
       <Appear index={1}>
         <Card>
           <Txt variant="h3">מתוך האפליקציה</Txt>
-          <Txt muted>1. נכנסים לאפליקציה עם מספר הטלפון.</Txt>
+          <Txt muted>1. נכנסים לאפליקציה עם חשבון Google או Apple.</Txt>
           <Txt muted>2. עוברים ללשונית ״פרופיל״.</Txt>
           <Txt muted>3. לוחצים ״מחיקת החשבון״ ומאשרים.</Txt>
           <Button small variant="secondary" title="כניסה לאפליקציה" onPress={() => router.push('/login')} />
@@ -57,7 +57,7 @@ export default function DeleteAccountInfo() {
       <Appear index={3}>
         <Card>
           <Txt variant="h3">מה נמחק</Txt>
-          <Txt muted>• החשבון ופרטי הכניסה.</Txt>
+          <Txt muted>• החשבון והקישור לחשבון Google / Apple.</Txt>
           <Txt muted>• השם, מספר הטלפון וההערות – מכל רישומי הסטודיו.</Txt>
           <Txt muted>• תורים עתידיים מבוטלים.</Txt>
           <Txt variant="h3" style={{ marginTop: spacing.sm }}>

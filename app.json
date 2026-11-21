@@ -50,7 +50,8 @@
             ]
           }
         ]
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.hilabrows.app",
@@ -93,7 +94,9 @@
           "imageWidth": 160
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-apple-authentication",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

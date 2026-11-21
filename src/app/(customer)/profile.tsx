@@ -4,7 +4,8 @@ import { Pressable, View } from 'react-native';
 
 import { Appear, Button, Card, ErrorBox, Field, Row, Screen, Txt } from '@/components/ui';
 import { useAuth } from '@/context/auth';
-import { formatPhone } from '@/lib/dates';
+import { formatPhone, normalizePhone } from '@/lib/dates';
+import { isMobile } from '@/lib/identity';
 import { confirm, showMessage } from '@/lib/dialogs';
 import { errorMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
@@ -14,6 +15,7 @@ export default function Profile() {
   const { session, profile, refresh, signOut } = useAuth();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,6 +23,7 @@ export default function Profile() {
 
   function startEditing() {
     setName(profile?.full_name ?? '');
+    setPhone(profile?.phone ?? '');
     setError(null);
     setEditing(true);
   }
@@ -28,10 +31,11 @@ export default function Profile() {
   async function save() {
     setError(null);
     if (name.trim().length < 2) return setError('נא להזין שם מלא.');
+    if (!isMobile(phone)) return setError('הזינו מספר נייד ישראלי, למשל 050-1234567.');
     setBusy(true);
     const { error: err } = await supabase
       .from('profiles')
-      .update({ full_name: name.trim() })
+      .update({ full_name: name.trim(), phone: normalizePhone(phone) })
       .eq('id', session!.user.id);
     setBusy(false);
     if (err) return setError(errorMessage(err));
@@ -65,9 +69,7 @@ export default function Profile() {
         {editing ? (
           <Card style={{ gap: spacing.md }}>
             <Field label="שם מלא" value={name} onChangeText={setName} />
-            <Txt variant="small" muted>
-              מספר הטלפון הוא מספר הכניסה שלך ולא ניתן לשנות אותו כאן.
-            </Txt>
+            <Field label="טלפון נייד" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
             <ErrorBox message={error} />
             <Row>
               <Button style={{ flex: 1 }} title="שמירה" onPress={save} loading={busy} />
@@ -97,7 +99,12 @@ export default function Profile() {
                 {formatPhone(profile.phone)}
               </Txt>
             ) : null}
-            <Button small variant="secondary" icon="create-outline" title="עריכת שם" onPress={startEditing} />
+            {session?.user.email ? (
+              <Txt variant="small" faint center>
+                {session.user.email}
+              </Txt>
+            ) : null}
+            <Button small variant="secondary" icon="create-outline" title="עריכת פרטים" onPress={startEditing} />
           </Card>
         )}
       </Appear>

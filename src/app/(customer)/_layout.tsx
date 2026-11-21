@@ -20,7 +20,7 @@ export default function CustomerLayout() {
   if (!session) return <Redirect href="/login" />;
   if (isAdmin) return <Redirect href="/calendar" />;
   if (accountError && !profile) return <AccountError />;
-  if (!loading && !profile?.full_name) return <Redirect href="/complete-profile" />;
+  if (!loading && (!profile?.full_name || !profile?.phone)) return <Redirect href="/complete-profile" />;
 
   return (
     <Tabs
