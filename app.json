@@ -6,8 +6,8 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "torim",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#0A0A0A",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F5F3EF",
     "ios": {
       "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.torimbeclick.app",
@@ -19,7 +19,7 @@
     "android": {
       "package": "com.torimbeclick.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0A0A0A",
+        "backgroundColor": "#F5F3EF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -32,8 +32,8 @@
       "name": "הגבות של הילה",
       "shortName": "הגבות של הילה",
       "lang": "he",
-      "themeColor": "#0A0A0A",
-      "backgroundColor": "#0A0A0A"
+      "themeColor": "#F5F3EF",
+      "backgroundColor": "#F5F3EF"
     },
     "plugins": [
       "expo-router",
@@ -47,7 +47,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0A0A0A",
+          "backgroundColor": "#F5F3EF",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 160
         }

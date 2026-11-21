@@ -28,7 +28,7 @@ type Palette = {
 
 /**
  * Colour palettes. They share one structure, so switching palette restyles the
- * whole app. Pick one with EXPO_PUBLIC_THEME (default: "mono").
+ * whole app. Pick one with EXPO_PUBLIC_THEME (default: "porcelain", the studio's choice).
  *
  * Built on the studio's black-and-white identity: a near-black (never pure #000,
  * which looks harsh on OLED) with warm off-white text, one accent colour at most,
@@ -136,7 +136,7 @@ export const palettes = {
 export type ThemeName = keyof typeof palettes;
 
 const requested = process.env.EXPO_PUBLIC_THEME as ThemeName | undefined;
-export const themeName: ThemeName = requested && requested in palettes ? requested : 'mono';
+export const themeName: ThemeName = requested && requested in palettes ? requested : 'porcelain';
 
 export const colors: Palette = palettes[themeName];
 

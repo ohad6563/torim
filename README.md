@@ -83,7 +83,7 @@ supabase/           מבנה מסד הנתונים, כללי אבטחה ופונ
 
 ## פלטות צבע
 
-`EXPO_PUBLIC_THEME` בוחר פלטה: `mono` (ברירת מחדל), `gold`, `nude`, `porcelain`. ההגדרות ב־`src/theme.ts`.
+`EXPO_PUBLIC_THEME` בוחר פלטה: `porcelain` (הנבחרת, ברירת מחדל), `mono`, `gold`, `nude`. ההגדרות ב־`src/theme.ts`.
 
 ## אפליקציה לסטודיו אחד
 
