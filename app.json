@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "תורים בקליק",
+    "name": "הגבות של הילה",
     "slug": "torim-beclick",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,7 +9,7 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0A0A0A",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.torimbeclick.app",
       "supportsTablet": true,
       "config": {
@@ -29,8 +29,8 @@
     "web": {
       "output": "single",
       "favicon": "./assets/images/favicon.png",
-      "name": "תורים בקליק",
-      "shortName": "תורים",
+      "name": "הגבות של הילה",
+      "shortName": "הגבות של הילה",
       "lang": "he",
       "themeColor": "#0A0A0A",
       "backgroundColor": "#0A0A0A"
@@ -49,7 +49,7 @@
         {
           "backgroundColor": "#0A0A0A",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 160
         }
       ],
       "expo-font"

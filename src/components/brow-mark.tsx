@@ -19,7 +19,7 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 type Cubic = [number, number, number, number, number, number, number, number];
 
-/** Approximate length of a cubic Bézier, so the stroke can be "drawn" with a dash offset. */
+/** Approximate length of a cubic Bézier, so a stroke can be "drawn" with a dash offset. */
 function cubicLength([x0, y0, x1, y1, x2, y2, x3, y3]: Cubic) {
   let len = 0;
   let px = x0;
@@ -36,23 +36,34 @@ function cubicLength([x0, y0, x1, y1, x2, y2, x3, y3]: Cubic) {
   return len;
 }
 
-// A brow arch drawn as a few pencil strokes, plus fine hair strokes along it.
-const STROKES: { c: Cubic; width: number; opacity: number; delay: number; duration: number }[] = [
-  { c: [12, 74, 70, 22, 150, 14, 228, 50], width: 3.2, opacity: 1, delay: 0, duration: 1300 },
-  { c: [20, 80, 80, 34, 152, 26, 222, 58], width: 1.4, opacity: 0.55, delay: 260, duration: 1200 },
-  { c: [30, 86, 88, 46, 150, 38, 214, 64], width: 0.8, opacity: 0.3, delay: 480, duration: 1100 },
-];
+const cubic = ([x0, y0, x1, y1, x2, y2, x3, y3]: Cubic) => `M ${x0} ${y0} C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
+const line = (x: number, y0: number, y1: number): Cubic => [x, y0, x, y0, x, y1, x, y1];
+
+// Same geometry as the app icon (assets/brand/mark.svg): the letter ה whose roof is a brow arch.
+const ARCH_TOP: Cubic = [300, 468, 400, 352, 590, 316, 736, 384];
+const ARCH_BOTTOM: Cubic = [300, 468, 424, 388, 596, 372, 736, 436];
+const ARCH_FILL = 'M 300 468 C 400 352, 590 316, 736 384 L 736 436 C 596 372, 424 388, 300 468 Z';
 const HAIRS: Cubic[] = [
-  [52, 52, 56, 44, 60, 38, 66, 32],
-  [84, 40, 88, 32, 93, 27, 99, 23],
-  [118, 33, 123, 26, 128, 22, 135, 19],
-  [152, 31, 158, 26, 164, 24, 171, 23],
-  [186, 36, 192, 33, 198, 32, 205, 33],
+  [392, 392, 398, 374, 405, 362, 414, 350],
+  [452, 362, 459, 345, 467, 334, 477, 324],
+  [515, 345, 523, 330, 532, 321, 543, 314],
+  [580, 340, 589, 328, 598, 322, 610, 318],
+  [642, 346, 652, 338, 662, 335, 674, 334],
 ];
 
-const d = ([x0, y0, x1, y1, x2, y2, x3, y3]: Cubic) => `M ${x0} ${y0} C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
-
-function Stroke({ c, width, opacity, delay, duration }: { c: Cubic; width: number; opacity: number; delay: number; duration: number }) {
+function Stroke({
+  c,
+  width,
+  opacity = 1,
+  delay,
+  duration,
+}: {
+  c: Cubic;
+  width: number;
+  opacity?: number;
+  delay: number;
+  duration: number;
+}) {
   const length = cubicLength(c);
   const reduce = useReducedMotion();
   const progress = useSharedValue(reduce ? 1 : 0);
@@ -63,7 +74,7 @@ function Stroke({ c, width, opacity, delay, duration }: { c: Cubic; width: numbe
   const animatedProps = useAnimatedProps(() => ({ strokeDashoffset: length * (1 - progress.value) }));
   return (
     <AnimatedPath
-      d={d(c)}
+      d={cubic(c)}
       stroke={colors.text}
       strokeOpacity={opacity}
       strokeWidth={width}
@@ -76,30 +87,41 @@ function Stroke({ c, width, opacity, delay, duration }: { c: Cubic; width: numbe
 }
 
 /**
- * Signature animation: an eyebrow arch that draws itself like pencil strokes,
- * then keeps a slow, calm "breathing" glow. Respects the system Reduce Motion setting.
+ * Signature animation of the studio's mark: the brow arch is sketched like a
+ * pencil outline and then filled in, the legs of the ה are drawn, and the fine
+ * hairs appear last. Afterwards it breathes slowly. Respects Reduce Motion.
  */
-export function BrowMark({ width = 240, style }: { width?: number; style?: StyleProp<ViewStyle> }) {
+export function BrowMark({ width = 160, style }: { width?: number; style?: StyleProp<ViewStyle> }) {
   const reduce = useReducedMotion();
+  const fill = useSharedValue(reduce ? 1 : 0);
   const breathe = useSharedValue(1);
   useEffect(() => {
     if (reduce) return;
-    breathe.set(withDelay(
-      2000,
-      withRepeat(withSequence(withTiming(0.55, { duration: 2200 }), withTiming(1, { duration: 2200 })), -1),
-    ));
-  }, [breathe, reduce]);
+    fill.set(withDelay(950, withTiming(1, { duration: 550, easing: Easing.out(Easing.quad) })));
+    breathe.set(
+      withDelay(
+        2600,
+        withRepeat(withSequence(withTiming(0.6, { duration: 2400 }), withTiming(1, { duration: 2400 })), -1),
+      ),
+    );
+  }, [breathe, fill, reduce]);
+  const fillProps = useAnimatedProps(() => ({ fillOpacity: fill.value }));
   const glow = useAnimatedStyle(() => ({ opacity: breathe.value }));
 
   return (
-    <View style={[{ width, aspectRatio: 240 / 100 }, style]} accessible={false} importantForAccessibility="no-hide-descendants">
+    <View
+      style={[{ width, aspectRatio: 470 / 430 }, style]}
+      accessible={false}
+      importantForAccessibility="no-hide-descendants">
       <Animated.View style={[{ flex: 1 }, glow]}>
-        <Svg width="100%" height="100%" viewBox="0 0 240 100">
-          {STROKES.map((s, i) => (
-            <Stroke key={i} {...s} />
-          ))}
+        <Svg width="100%" height="100%" viewBox="283 296 470 430">
+          <Stroke c={ARCH_TOP} width={5} delay={0} duration={1000} />
+          <Stroke c={ARCH_BOTTOM} width={5} delay={120} duration={1000} />
+          <AnimatedPath d={ARCH_FILL} fill={colors.text} animatedProps={fillProps} />
+          <Stroke c={line(716, 420, 708)} width={40} delay={900} duration={650} />
+          <Stroke c={line(340, 548, 708)} width={40} delay={1200} duration={500} />
           {HAIRS.map((c, i) => (
-            <Stroke key={`h${i}`} c={c} width={1} opacity={0.45} delay={900 + i * 90} duration={500} />
+            <Stroke key={i} c={c} width={9} opacity={0.6} delay={1500 + i * 90} duration={380} />
           ))}
         </Svg>
       </Animated.View>

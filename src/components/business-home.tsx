@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Linking, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -54,6 +54,8 @@ export function BusinessHome({ slug, showOwnerEntry = false }: { slug: string; s
 
   if (loading) return <Loading />;
   if (!data) {
+    // In the single-studio app, before the studio has been set up, show the owner's welcome instead.
+    if (showOwnerEntry) return <Redirect href="/welcome" />;
     return (
       <SafeAreaView style={styles.screen}>
         <EmptyState icon="search-outline" title="העסק לא נמצא" message="ייתכן שהקישור שגוי או שהעסק שינה את הכתובת." />
@@ -76,7 +78,7 @@ export function BusinessHome({ slug, showOwnerEntry = false }: { slug: string; s
           {business.address?.split(',').pop()?.trim() || 'סטודיו'}
         </Txt>
       </Animated.View>
-      <BrowMark width={wide ? 320 : 220} style={{ marginVertical: spacing.lg }} />
+      <BrowMark width={wide ? 190 : 132} style={{ marginVertical: spacing.lg }} />
       <Animated.View entering={FadeInDown.delay(500).duration(800)}>
         <Txt variant="display" center style={wide && { fontSize: 64, lineHeight: 70 }}>
           {business.name}

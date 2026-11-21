@@ -1,0 +1,19 @@
+<!-- "הגבות של הילה" mark: the Hebrew letter ה (Hila's initial) whose roof is a soft brow arch. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <g transform="translate(512 520) scale(1.38) translate(-518 -514)">
+  <g fill="none" stroke="#F4F4F2" stroke-linecap="round">
+    <!-- brow hairs -->
+    <path d="M 392 392 C 398 374, 405 362, 414 350" stroke-width="9" opacity=".6"/>
+    <path d="M 452 362 C 459 345, 467 334, 477 324" stroke-width="9" opacity=".6"/>
+    <path d="M 515 345 C 523 330, 532 321, 543 314" stroke-width="9" opacity=".6"/>
+    <path d="M 580 340 C 589 328, 598 322, 610 318" stroke-width="9" opacity=".6"/>
+    <path d="M 642 346 C 652 338, 662 335, 674 334" stroke-width="9" opacity=".6"/>
+    <!-- right leg -->
+    <path d="M 716 420 L 716 708" stroke-width="40"/>
+    <!-- detached left leg -->
+    <path d="M 340 548 L 340 708" stroke-width="40"/>
+  </g>
+  <!-- brow arch: thick head on the right, tapering to a fine tail on the left -->
+  <path fill="#F4F4F2" d="M 300 468 C 400 352, 590 316, 736 384 L 736 436 C 596 372, 424 388, 300 468 Z"/>
+  </g>
+</svg>

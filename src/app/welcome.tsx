@@ -14,6 +14,8 @@ const FEATURES: { icon: IconName; title: string; text: string }[] = [
   { icon: 'people-outline', title: 'כרטיס לקוח', text: 'היסטוריית טיפולים והערות לכל לקוחה.' },
 ];
 
+const STUDIO_NAME = process.env.EXPO_PUBLIC_STUDIO_NAME;
+
 export default function Welcome() {
   const { session } = useAuth();
   if (session) return <Redirect href="/" />;
@@ -28,15 +30,15 @@ export default function Welcome() {
         </>
       }>
       <View style={styles.hero}>
-        <BrowMark width={200} />
+        <BrowMark width={120} />
         <Animated.View entering={FadeInDown.delay(500).duration(800)}>
           <Txt variant="display" center>
-            תורים בקליק
+            {STUDIO_NAME || 'תורים בקליק'}
           </Txt>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(700).duration(800)}>
           <Txt muted center>
-            ניהול תורים אלגנטי לסטודיו שלך
+            {STUDIO_NAME ? 'כאן מקימים את הסטודיו ופותחים את יומן התורים' : 'ניהול תורים אלגנטי לסטודיו שלך'}
           </Txt>
         </Animated.View>
       </View>

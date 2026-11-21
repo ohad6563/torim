@@ -24,7 +24,8 @@ export default function Onboarding() {
   const [category, setCategory] = useState<Category>('מספרה');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [slug, setSlug] = useState('');
+  // The single-studio build already knows its link address.
+  const [slug, setSlug] = useState(process.env.EXPO_PUBLIC_BUSINESS_SLUG ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
