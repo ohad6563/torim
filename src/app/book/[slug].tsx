@@ -29,7 +29,7 @@ import {
   formatDayLong,
   formatDuration,
   formatPrice,
-  isValidPhone,
+  formatPhone,
   timeOf,
   todayIn,
   weekdayOf,
@@ -59,9 +59,9 @@ function BookFlow() {
   const [serviceId, setServiceId] = useState<string | null>(params.service ?? null);
   const [pickedDay, setPickedDay] = useState('');
   const [slot, setSlot] = useState<string | null>(null);
-  // Pre-filled from the account; editable in case the booking is for someone else.
+  // Name pre-filled from the account (editable); the phone is the verified sign-in number.
   const [name, setName] = useState(profile?.full_name ?? '');
-  const [phone, setPhone] = useState(profile?.phone ?? '');
+  const phone = profile?.phone ?? '';
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,7 +112,6 @@ function BookFlow() {
   async function book() {
     setError(null);
     if (name.trim().length < 2) return setError('נא להזין שם מלא.');
-    if (!isValidPhone(phone)) return setError('מספר הטלפון לא תקין.');
     setBusy(true);
     const { data: res, error: err } = await supabase.rpc('book_appointment', {
       p_business_id: business!.id,
@@ -255,15 +254,12 @@ function BookFlow() {
                 ) : null}
               </View>
               <Field label="שם מלא" value={name} onChangeText={setName} autoComplete="name" textContentType="name" />
-              <Field
-                label="טלפון נייד"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-                autoComplete="tel"
-                textContentType="telephoneNumber"
-                placeholder="050-0000000"
-              />
+              <Row style={styles.phoneRow}>
+                <Txt variant="small" muted style={{ flex: 1 }}>
+                  טלפון לתור
+                </Txt>
+                <Txt>{`\u2066${formatPhone(phone)}\u2069`}</Txt>
+              </Row>
               <Field label="הערה (לא חובה)" value={notes} onChangeText={setNotes} multiline maxLength={300} />
               <ErrorBox message={error} />
               <Pressable onPress={() => router.push('/privacy')} accessibilityRole="link">
@@ -389,6 +385,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
+  },
+  phoneRow: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   ticket: {
     gap: spacing.xs,

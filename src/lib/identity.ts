@@ -1,23 +1,14 @@
+import { isValidPhone, normalizePhone } from '@/lib/dates';
+
 /**
- * Accounts sign in with an email or a username. Supabase Auth needs an email,
- * so a username maps to a private address on the app's own domain.
+ * Sign-in is by Israeli mobile number. Supabase Auth expects international
+ * format: "054-123-4567" -> "+972541234567".
  */
-const USERNAME_DOMAIN = 'users.hila-brows.app';
-
-export const USERNAME_RE = /^[a-z0-9._-]{3,30}$/;
-
-export function isEmail(input: string) {
-  return /^\S+@\S+\.\S+$/.test(input.trim());
+export function toE164(phone: string): string {
+  return '+972' + normalizePhone(phone).slice(1);
 }
 
-/** "ohad1234" -> "ohad1234@users.hila-brows.app"; emails are returned as-is. */
-export function loginEmail(input: string): string {
-  const v = input.trim().toLowerCase();
-  return v.includes('@') ? v : `${v}@${USERNAME_DOMAIN}`;
-}
-
-/** The username part, if the input is a username (not an email). */
-export function usernameOf(input: string): string | null {
-  const v = input.trim().toLowerCase();
-  return v.includes('@') ? null : v;
+/** Israeli mobile numbers only (05X-XXXXXXX): SMS codes can't reach landlines. */
+export function isMobile(phone: string): boolean {
+  return isValidPhone(phone) && /^05\d{8}$/.test(normalizePhone(phone));
 }

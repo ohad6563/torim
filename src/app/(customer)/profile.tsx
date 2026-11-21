@@ -4,7 +4,7 @@ import { Pressable, View } from 'react-native';
 
 import { Appear, Button, Card, ErrorBox, Field, Row, Screen, Txt } from '@/components/ui';
 import { useAuth } from '@/context/auth';
-import { formatPhone, isValidPhone, normalizePhone } from '@/lib/dates';
+import { formatPhone } from '@/lib/dates';
 import { confirm, showMessage } from '@/lib/dialogs';
 import { errorMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
@@ -14,16 +14,13 @@ export default function Profile() {
   const { session, profile, refresh, signOut } = useAuth();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const email = session?.user.email ?? '';
-  const signInName = profile?.username ?? email;
+  const signInName = profile?.full_name ?? '';
 
   function startEditing() {
     setName(profile?.full_name ?? '');
-    setPhone(profile?.phone ?? '');
     setError(null);
     setEditing(true);
   }
@@ -31,11 +28,10 @@ export default function Profile() {
   async function save() {
     setError(null);
     if (name.trim().length < 2) return setError('נא להזין שם מלא.');
-    if (!isValidPhone(phone)) return setError('מספר הטלפון לא תקין.');
     setBusy(true);
     const { error: err } = await supabase
       .from('profiles')
-      .update({ full_name: name.trim(), phone: normalizePhone(phone) })
+      .update({ full_name: name.trim() })
       .eq('id', session!.user.id);
     setBusy(false);
     if (err) return setError(errorMessage(err));
@@ -69,7 +65,9 @@ export default function Profile() {
         {editing ? (
           <Card style={{ gap: spacing.md }}>
             <Field label="שם מלא" value={name} onChangeText={setName} />
-            <Field label="טלפון נייד" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+            <Txt variant="small" muted>
+              מספר הטלפון הוא מספר הכניסה שלך ולא ניתן לשנות אותו כאן.
+            </Txt>
             <ErrorBox message={error} />
             <Row>
               <Button style={{ flex: 1 }} title="שמירה" onPress={save} loading={busy} />
@@ -88,7 +86,7 @@ export default function Profile() {
                 justifyContent: 'center',
               }}>
               <Txt variant="h1" color={colors.textOnPrimary}>
-                {(profile?.full_name ?? signInName).trim().charAt(0).toUpperCase()}
+                {(signInName || '?').trim().charAt(0)}
               </Txt>
             </View>
             <Txt variant="h2" center>
@@ -99,10 +97,7 @@ export default function Profile() {
                 {formatPhone(profile.phone)}
               </Txt>
             ) : null}
-            <Txt variant="small" faint center>
-              {signInName}
-            </Txt>
-            <Button small variant="secondary" icon="create-outline" title="עריכת פרטים" onPress={startEditing} />
+            <Button small variant="secondary" icon="create-outline" title="עריכת שם" onPress={startEditing} />
           </Card>
         )}
       </Appear>

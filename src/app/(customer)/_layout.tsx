@@ -14,10 +14,11 @@ const TABS: { name: string; title: string; icon: IconName; header: boolean }[] =
 
 /** The customer app. Signed-in accounts that don't manage the studio land here. */
 export default function CustomerLayout() {
-  const { loading, session, isAdmin } = useAuth();
+  const { loading, session, isAdmin, profile } = useAuth();
   if (loading && !session) return <Loading />;
   if (!session) return <Redirect href="/login" />;
   if (isAdmin) return <Redirect href="/calendar" />;
+  if (!loading && !profile?.full_name) return <Redirect href="/complete-profile" />;
 
   return (
     <Tabs

@@ -4,12 +4,14 @@ import { Loading } from '@/components/ui';
 import { useAuth } from '@/context/auth';
 
 /**
- * Entry point. Everyone signs in first; then admins (studio owner and accounts
- * with admin rights) get the management area and everyone else the customer app.
+ * Entry point. Everyone signs in first (phone + SMS code); new customers then
+ * give their name once. Admins get the management area, everyone else the customer app.
  */
 export default function Index() {
-  const { loading, session, isAdmin } = useAuth();
+  const { loading, session, isAdmin, profile } = useAuth();
   if (loading) return <Loading />;
   if (!session) return <Redirect href="/login" />;
-  return <Redirect href={isAdmin ? '/calendar' : '/home'} />;
+  if (isAdmin) return <Redirect href="/calendar" />;
+  if (!profile?.full_name) return <Redirect href="/complete-profile" />;
+  return <Redirect href="/home" />;
 }

@@ -84,6 +84,7 @@ export default function RootLayout() {
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="login" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="signup" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="complete-profile" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="privacy" options={{ title: 'מדיניות פרטיות' }} />
               <Stack.Screen name="(owner)" options={{ headerShown: false }} />
               <Stack.Screen name="(customer)" options={{ headerShown: false }} />
