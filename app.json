@@ -111,6 +111,12 @@
     },
     "locales": {
       "he": "./assets/locales/he.json"
+    },
+    "owner": "ohad6563s-team",
+    "extra": {
+      "eas": {
+        "projectId": "a1b71bd1-6308-4ffa-89d7-987366f787d1"
+      }
     }
   }
 }
