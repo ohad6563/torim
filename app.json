@@ -96,7 +96,14 @@
       ],
       "expo-font",
       "expo-apple-authentication",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#141210"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

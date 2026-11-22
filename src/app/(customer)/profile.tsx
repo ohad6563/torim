@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { RemindersCard } from '@/components/reminders-card';
 import { Appear, Button, Card, ErrorBox, Field, Row, Screen, Txt } from '@/components/ui';
 import { useAuth } from '@/context/auth';
 import { formatPhone, normalizePhone } from '@/lib/dates';
@@ -109,7 +110,11 @@ export default function Profile() {
         )}
       </Appear>
 
-      <Appear index={1} style={{ gap: spacing.sm }}>
+      <Appear index={1}>
+        <RemindersCard />
+      </Appear>
+
+      <Appear index={2} style={{ gap: spacing.sm }}>
         <Button title="יציאה מהחשבון" variant="secondary" icon="log-out-outline" onPress={logout} />
         <Pressable onPress={() => router.push('/privacy')} accessibilityRole="link" style={{ padding: spacing.md }}>
           <Txt variant="small" muted center>

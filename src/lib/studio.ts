@@ -19,4 +19,5 @@ export const STUDIO = {
 export const PROCESSORS = [
   { name: 'Supabase', role: 'אחסון מסד הנתונים וניהול ההתחברות (שרתים מחוץ לישראל)' },
   { name: 'Google / Apple', role: 'אימות זהות בכניסה עם חשבון Google או Apple' },
+  { name: 'Expo', role: 'שליחת התראות ותזכורות לטלפון (שרתים מחוץ לישראל)' },
 ];

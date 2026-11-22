@@ -14,6 +14,7 @@ import { useEffect } from 'react';
 import { I18nManager, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { PushManager } from '@/components/push-manager';
 import { SetupNeeded } from '@/components/setup-needed';
 import { AuthProvider } from '@/context/auth';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -70,6 +71,7 @@ export default function RootLayout() {
         <StatusBar style={colors.isDark ? 'light' : 'dark'} />
         {isSupabaseConfigured ? (
           <AuthProvider>
+            <PushManager />
             <Stack
               screenOptions={{
                 headerTintColor: colors.text,

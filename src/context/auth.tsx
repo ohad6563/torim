@@ -2,6 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { errorMessage } from '@/lib/errors';
+import { unregisterPush } from '@/lib/push';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { Business, Profile } from '@/lib/types';
 
@@ -105,7 +106,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refresh: () => loadAccount(session),
       refreshBusiness: () => loadAccount(session),
       signOut: async () => {
-        // 'local' always clears this device's session, even offline.
+        // Stop reminders to this device for this account, then clear the session
+        // ('local' always clears this device's session, even offline).
+        await unregisterPush();
         await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
         setSession(null);
         setBusiness(null);

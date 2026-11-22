@@ -17,6 +17,7 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DateStrip } from '@/components/date-strip';
+import { RemindersCard } from '@/components/reminders-card';
 import { withAccount } from '@/components/owner-gate';
 import { SlotGrid } from '@/components/slot-grid';
 import { Appear, Button, EmptyState, ErrorBox, Field, IconButton, Loading, Row, Screen, Txt } from '@/components/ui';
@@ -364,6 +365,7 @@ function Success({
         ) : null}
       </Animated.View>
       <Animated.View entering={FadeIn.delay(800).duration(600)} style={styles.successActions}>
+        <RemindersCard compact />
         <Button title="סיום" onPress={() => router.replace('/home')} />
         <Button title="התורים שלי" variant="secondary" onPress={() => router.replace('/appointments')} />
         {token ? (
