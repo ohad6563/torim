@@ -241,9 +241,24 @@ export function BusinessHome({ slug }: { slug: string }) {
       ) : null}
 
       <View style={styles.footer}>
+        <Pressable onPress={() => router.push('/terms')} accessibilityRole="link" hitSlop={8}>
+          <Txt variant="tiny" faint>
+            תנאי שימוש
+          </Txt>
+        </Pressable>
         <Pressable onPress={() => router.push('/privacy')} accessibilityRole="link" hitSlop={8}>
           <Txt variant="tiny" faint>
             מדיניות פרטיות
+          </Txt>
+        </Pressable>
+        <Pressable onPress={() => router.push('/accessibility')} accessibilityRole="link" hitSlop={8}>
+          <Txt variant="tiny" faint>
+            נגישות
+          </Txt>
+        </Pressable>
+        <Pressable onPress={() => router.push('/support')} accessibilityRole="link" hitSlop={8}>
+          <Txt variant="tiny" faint>
+            תמיכה
           </Txt>
         </Pressable>
       </View>
@@ -313,8 +328,9 @@ const styles = StyleSheet.create({
   statusDot: { width: 8, height: 8, borderRadius: 4 },
   footer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: spacing.xl,
+    gap: spacing.lg,
     paddingTop: spacing.xl,
   },
 });

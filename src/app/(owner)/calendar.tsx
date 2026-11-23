@@ -67,7 +67,7 @@ export default function Calendar() {
             onPress={() => router.push({ pathname: '/appointment/new', params: { day } })}
           />
         }>
-        <Pressable onPress={share} style={({ pressed }) => [styles.shareBanner, pressed && { opacity: 0.8 }]}>
+        <Pressable accessibilityRole="button" onPress={share} style={({ pressed }) => [styles.shareBanner, pressed && { opacity: 0.8 }]}>
           <View style={{ flex: 1 }}>
             <Txt bold color={colors.primary}>
               שתפו את קישור קביעת התורים

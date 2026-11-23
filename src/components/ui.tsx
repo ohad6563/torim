@@ -204,6 +204,9 @@ type TxtProps = {
   numberOfLines?: number;
   /** Small caps-like label: tracked out, muted. */
   label?: boolean;
+  /** Inline link inside a sentence. */
+  onPress?: () => void;
+  accessibilityRole?: 'header' | 'link' | 'text';
 };
 
 export function Txt({
@@ -218,12 +221,16 @@ export function Txt({
   style,
   numberOfLines,
   label,
+  onPress,
+  accessibilityRole,
 }: TxtProps) {
   const size = font[variant];
   const w = weight ?? (bold ? 'semibold' : VARIANT_WEIGHT[variant]);
   return (
     <Text
       numberOfLines={numberOfLines}
+      onPress={onPress}
+      accessibilityRole={accessibilityRole ?? (onPress ? 'link' : undefined)}
       maxFontSizeMultiplier={variant === 'display' ? 1.2 : 1.6}
       style={[
         styles.text,

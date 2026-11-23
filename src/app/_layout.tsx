@@ -91,6 +91,9 @@ export default function RootLayout() {
               <Stack.Screen name="complete-profile" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="privacy" options={{ title: 'מדיניות פרטיות' }} />
               <Stack.Screen name="delete-account" options={{ title: 'מחיקת חשבון' }} />
+              <Stack.Screen name="terms" options={{ title: 'תנאי שימוש' }} />
+              <Stack.Screen name="accessibility" options={{ title: 'הצהרת נגישות' }} />
+              <Stack.Screen name="support" options={{ title: 'תמיכה ויצירת קשר' }} />
               <Stack.Screen name="+not-found" options={{ title: 'לא נמצא' }} />
               <Stack.Screen name="(owner)" options={{ headerShown: false }} />
               <Stack.Screen name="(customer)" options={{ headerShown: false }} />

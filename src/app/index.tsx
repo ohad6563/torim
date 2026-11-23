@@ -15,6 +15,6 @@ export default function Index() {
   if (isAdmin) return <Redirect href="/calendar" />;
   // Couldn't load the account: don't guess (e.g. send an admin to the customer app).
   if (accountError && !profile) return <AccountError />;
-  if (!profile?.full_name || !profile?.phone) return <Redirect href="/complete-profile" />;
+  if (!profile?.full_name || !profile?.phone || !profile?.terms_accepted_at) return <Redirect href="/complete-profile" />;
   return <Redirect href="/home" />;
 }

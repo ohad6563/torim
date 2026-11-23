@@ -116,11 +116,23 @@ export default function Profile() {
 
       <Appear index={2} style={{ gap: spacing.sm }}>
         <Button title="יציאה מהחשבון" variant="secondary" icon="log-out-outline" onPress={logout} />
-        <Pressable onPress={() => router.push('/privacy')} accessibilityRole="link" style={{ padding: spacing.md }}>
-          <Txt variant="small" muted center>
+        <Txt variant="small" muted center style={{ padding: spacing.md }}>
+          <Txt variant="small" muted onPress={() => router.push('/terms')}>
+            תנאי שימוש
+          </Txt>
+          {'  ·  '}
+          <Txt variant="small" muted onPress={() => router.push('/privacy')}>
             מדיניות פרטיות
           </Txt>
-        </Pressable>
+          {'  ·  '}
+          <Txt variant="small" muted onPress={() => router.push('/accessibility')}>
+            נגישות
+          </Txt>
+          {'  ·  '}
+          <Txt variant="small" muted onPress={() => router.push('/support')}>
+            תמיכה
+          </Txt>
+        </Txt>
         <Pressable onPress={deleteAccount} accessibilityRole="button" style={{ padding: spacing.md }}>
           <Txt variant="small" color={colors.danger} center>
             מחיקת החשבון

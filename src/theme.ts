@@ -117,7 +117,7 @@ export const palettes = {
     borderStrong: '#CFCAC2',
     text: '#141210',
     textMuted: '#6F6A64',
-    textFaint: '#A39E97',
+    textFaint: '#736D67', // 4.6:1 on the background (WCAG AA for small text)
     primary: '#141210',
     primaryDark: '#000000',
     primarySoft: '#EFECE7',

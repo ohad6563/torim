@@ -204,7 +204,7 @@ function NewAppointment() {
             לקוחות קיימים:
           </Txt>
           {visibleMatches.map((c) => (
-            <Pressable key={c.id} onPress={() => pickCustomer(c)} style={({ pressed }) => [styles.match, pressed && { opacity: 0.7 }]}>
+            <Pressable accessibilityRole="button" key={c.id} onPress={() => pickCustomer(c)} style={({ pressed }) => [styles.match, pressed && { opacity: 0.7 }]}>
               <Txt bold style={{ flex: 1 }}>
                 {c.name}
               </Txt>

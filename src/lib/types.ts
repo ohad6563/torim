@@ -87,6 +87,8 @@ export type Profile = {
   full_name: string | null;
   phone: string | null;
   username: string | null;
+  /** When the customer accepted the terms of use and privacy policy (migration 0005). */
+  terms_accepted_at?: string | null;
 };
 
 export type MyAppointment = {

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router, useLocalSearchParams, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -80,14 +80,19 @@ export default function Login() {
         </ScrollView>
         <Animated.View entering={FadeInDown.delay(1300).duration(700)} style={styles.footer}>
           <SocialButtons busy={busy} onGoogle={() => run('google')} onApple={() => run('apple')} onDark />
-          <Pressable onPress={() => router.push('/privacy')} accessibilityRole="link" style={{ paddingTop: spacing.xs }}>
-            <Txt variant="tiny" center color="rgba(255,255,255,0.6)">
-              בכניסה את/ה מאשר/ת את{' '}
-              <Txt variant="tiny" color="rgba(255,255,255,0.85)" style={{ textDecorationLine: 'underline' }}>
-                מדיניות הפרטיות
-              </Txt>
+          <Txt variant="tiny" center color="rgba(255,255,255,0.6)" style={{ paddingTop: spacing.xs }}>
+            <Txt variant="tiny" color="rgba(255,255,255,0.85)" style={styles.link} onPress={() => router.push('/terms')}>
+              תנאי השימוש
             </Txt>
-          </Pressable>
+            {'  ·  '}
+            <Txt variant="tiny" color="rgba(255,255,255,0.85)" style={styles.link} onPress={() => router.push('/privacy')}>
+              מדיניות הפרטיות
+            </Txt>
+            {'  ·  '}
+            <Txt variant="tiny" color="rgba(255,255,255,0.85)" style={styles.link} onPress={() => router.push('/accessibility')}>
+              נגישות
+            </Txt>
+          </Txt>
         </Animated.View>
       </SafeAreaView>
     </View>
@@ -95,6 +100,7 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+  link: { textDecorationLine: 'underline' },
   root: { flex: 1, backgroundColor: '#0b0807' },
   safe: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, justifyContent: 'center' },
