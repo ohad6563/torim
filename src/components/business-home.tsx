@@ -19,6 +19,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { BrowMark } from '@/components/brow-mark';
 import { MyAppointmentCard } from '@/components/my-appointment-card';
 import { Appear, Button, Card, EmptyState, IconButton, Loading, PressableScale, Row, Txt } from '@/components/ui';
+import { ServiceQuiz } from '@/components/service-quiz';
 import { VideoBackdrop } from '@/components/video-backdrop';
 import { useAuth } from '@/context/auth';
 import { useMyAppointments } from '@/hooks/use-my-appointments';
@@ -182,6 +183,10 @@ export function BusinessHome({ slug }: { slug: string }) {
           {services.length === 0 ? <Txt muted>בקרוב יתווספו טיפולים לקביעה אונליין.</Txt> : null}
         </View>
       </View>
+
+      <Appear delay={350}>
+        <ServiceQuiz services={services} onBook={book} />
+      </Appear>
 
       <Appear delay={400}>
         <Txt label variant="tiny" style={styles.sectionLabel}>
