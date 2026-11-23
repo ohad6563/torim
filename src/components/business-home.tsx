@@ -16,7 +16,6 @@ import Animated, {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { BeforeAfter } from '@/components/before-after';
 import { BrowMark } from '@/components/brow-mark';
 import { MyAppointmentCard } from '@/components/my-appointment-card';
 import { Appear, Button, Card, EmptyState, IconButton, Loading, PressableScale, Row, Txt } from '@/components/ui';
@@ -26,7 +25,6 @@ import { useMyAppointments } from '@/hooks/use-my-appointments';
 import { usePublicBusiness } from '@/hooks/use-public-business';
 import { formatDuration, formatPhone, formatPrice, timeRange, todayIn, WEEKDAYS, weekdayOf } from '@/lib/dates';
 import { whatsappUrl } from '@/lib/links';
-import { BEFORE_AFTER } from '@/lib/media';
 import { colors, MAX_WIDTH, radius, spacing } from '@/theme';
 
 /**
@@ -184,24 +182,6 @@ export function BusinessHome({ slug }: { slug: string }) {
           {services.length === 0 ? <Txt muted>בקרוב יתווספו טיפולים לקביעה אונליין.</Txt> : null}
         </View>
       </View>
-
-      {BEFORE_AFTER.length > 0 ? (
-        <Appear delay={300}>
-          <Txt label variant="tiny" style={styles.sectionLabel}>
-            לפני / אחרי
-          </Txt>
-          <View style={{ gap: spacing.lg }}>
-            {BEFORE_AFTER.map((item) => (
-              <View key={item.title} style={{ gap: spacing.sm }}>
-                <BeforeAfter item={item} />
-                <Txt variant="small" muted center>
-                  {item.title} · גררו את הפס כדי לראות את ההבדל
-                </Txt>
-              </View>
-            ))}
-          </View>
-        </Appear>
-      ) : null}
 
       <Appear delay={400}>
         <Txt label variant="tiny" style={styles.sectionLabel}>

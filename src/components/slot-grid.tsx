@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { View } from 'react-native';
 
 import { Appear, Skeleton, Txt } from '@/components/ui';
 import { WHEEL_ITEM_HEIGHT, WheelPicker } from '@/components/wheel-picker';
@@ -63,11 +64,11 @@ export function SlotGrid({
   });
 
   return (
-    <Appear>
+    <View>
       <WheelPicker items={items} selectedKey={selected} onChange={onSelect} accessibilityLabel="בחירת שעה" />
       <Txt variant="tiny" faint center style={{ marginTop: spacing.sm }}>
         {slots.length === 1 ? 'שעה פנויה אחת' : `${slots.length} שעות פנויות`} · גוללים לבחירה
       </Txt>
-    </Appear>
+    </View>
   );
 }

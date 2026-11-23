@@ -7,12 +7,15 @@ import Animated, {
   FadeIn,
   FadeInDown,
   FadeInLeft,
+  FadeOut,
+  SlideInLeft,
+  SlideInRight,
+  ZoomIn,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
   withSpring,
   withTiming,
-  ZoomIn,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -60,6 +63,7 @@ function BookFlow() {
   const [step, setStep] = useState<Step>(params.service ? 'time' : 'service');
   const [serviceId, setServiceId] = useState<string | null>(params.service ?? null);
   const [pickedDay, setPickedDay] = useState('');
+  const [slideFrom, setSlideFrom] = useState<'left' | 'right'>('left');
   const [slot, setSlot] = useState<string | null>(null);
   // Name pre-filled from the profile (editable); the phone comes from the profile.
   const [name, setName] = useState(profile?.full_name ?? '');
@@ -225,19 +229,26 @@ function BookFlow() {
                 selected={day}
                 disabledDays={closedDays}
                 onSelect={(d) => {
+                  // Later days sit to the left (RTL), so their times slide in from the left.
+                  setSlideFrom(d > day ? 'left' : 'right');
                   setPickedDay(d);
                   setSlot(null);
                 }}
               />
-              <SlotGrid error={slotsError}
+              <Animated.View
                 key={`${day}-${refreshKey}`}
-                slots={slots}
-                loading={slotsLoading}
-                tz={tz}
-                selected={slot}
-                onSelect={setSlot}
-                emptyText="אין שעות פנויות ביום הזה. נסו יום אחר."
-              />
+                entering={(slideFrom === 'left' ? SlideInLeft : SlideInRight).springify().damping(18).stiffness(170)}
+                exiting={FadeOut.duration(110)}>
+                <SlotGrid
+                  error={slotsError}
+                  slots={slots}
+                  loading={slotsLoading}
+                  tz={tz}
+                  selected={slot}
+                  onSelect={setSlot}
+                  emptyText="אין שעות פנויות ביום הזה. נסו יום אחר."
+                />
+              </Animated.View>
               <ErrorBox message={error} />
             </>
           ) : null}
@@ -337,7 +348,6 @@ function Success({
 
   return (
     <SafeAreaView style={[styles.screen, styles.success]} edges={['top', 'bottom']}>
-      <Confetti />
       <View style={styles.successBadgeWrap}>
         <Animated.View style={[styles.successRing, ringStyle]} />
         <Animated.View entering={ZoomIn.springify().damping(12)} style={styles.successBadge}>
@@ -370,6 +380,8 @@ function Success({
           </Txt>
         ) : null}
       </Animated.View>
+      {/* Last, so it's drawn above everything. */}
+      <Confetti />
     </SafeAreaView>
   );
 }
