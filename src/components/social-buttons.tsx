@@ -57,10 +57,13 @@ export function SocialButtons({
   onGoogle,
   onApple,
   busy,
+  onDark,
 }: {
   onGoogle: () => void;
   onApple: () => void;
   busy: 'google' | 'apple' | null;
+  /** On a dark background (the video): white Apple button. */
+  onDark?: boolean;
 }) {
   const [apple, setApple] = useState(false);
   useEffect(() => {
@@ -73,7 +76,7 @@ export function SocialButtons({
         <AppleAuthentication.AppleAuthenticationButton
           buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
           buttonStyle={
-            colors.isDark
+            onDark || colors.isDark
               ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
               : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
           }

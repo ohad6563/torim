@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, type ComponentProps, type ReactNode } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -249,7 +250,8 @@ export function Txt({
 type ButtonProps = {
   title: string;
   onPress?: () => void;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  /** 'inverse': white button for use on top of photos / video. */
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'inverse';
   icon?: IconName;
   loading?: boolean;
   disabled?: boolean;
@@ -275,6 +277,7 @@ export function Button({
     secondary: { bg: 'transparent', fg: colors.text, border: colors.borderStrong },
     ghost: { bg: 'transparent', fg: colors.text, border: 'transparent' },
     danger: { bg: 'transparent', fg: colors.danger, border: colors.dangerSoft },
+    inverse: { bg: '#FFFFFF', fg: '#141210', border: '#FFFFFF' },
   }[variant];
   const isDisabled = disabled || loading;
   return (
@@ -493,14 +496,60 @@ function Dot({ delay }: { delay: number }) {
   return <Animated.View style={[styles.dot, style]} />;
 }
 
-/** Placeholder block with a slow shimmer, for content that is loading. */
+/** Placeholder block with a light sweeping across it (shimmer) while content loads. */
 export function Skeleton({ height = 72, style }: { height?: number; style?: StyleProp<ViewStyle> }) {
-  const v = useSharedValue(0.4);
+  const [w, setW] = useState(0);
+  const x = useSharedValue(0);
   useEffect(() => {
-    v.set(withRepeat(withTiming(1, { duration: 900, easing: Easing.inOut(Easing.quad) }), -1, true));
-  }, [v]);
-  const anim = useAnimatedStyle(() => ({ opacity: v.value }));
-  return <Animated.View style={[styles.skeleton, { height }, anim, style]} />;
+    if (!w) return;
+    x.set(withRepeat(withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.quad) }), -1, false));
+  }, [w, x]);
+  const sweep = useAnimatedStyle(() => ({ transform: [{ translateX: -w + x.value * w * 2 }] }));
+  return (
+    <View
+      style={[styles.skeleton, { height }, style]}
+      onLayout={(e) => setW(e.nativeEvent.layout.width)}
+      accessibilityRole="progressbar"
+      accessibilityLabel="טוען">
+      <Animated.View style={[StyleSheet.absoluteFill, sweep]}>
+        <LinearGradient
+          colors={['transparent', colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.75)', 'transparent']}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
+    </View>
+  );
+}
+
+/** Any content that springs down a little when pressed (with a light haptic). */
+export function PressableScale({
+  children,
+  onPress,
+  style,
+  accessibilityLabel,
+}: {
+  children: ReactNode;
+  onPress: () => void;
+  style?: StyleProp<ViewStyle>;
+  accessibilityLabel?: string;
+}) {
+  const press = usePressScale(0.97);
+  return (
+    <AnimatedPressable
+      onPress={() => {
+        haptics.tap();
+        onPress();
+      }}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      style={[style, press.style]}>
+      {children}
+    </AnimatedPressable>
+  );
 }
 
 export function EmptyState({
@@ -634,7 +683,7 @@ const styles = StyleSheet.create({
   chipText: { fontSize: font.small, fontFamily: family.medium, color: colors.text },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.text },
-  skeleton: { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg },
+  skeleton: { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg, overflow: 'hidden' },
   empty: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xxl, paddingHorizontal: spacing.lg },
   emptyIcon: {
     width: 64,

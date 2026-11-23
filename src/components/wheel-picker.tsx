@@ -9,6 +9,9 @@ import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -58,9 +61,15 @@ export function WheelPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
+  // The middle band gives a small "pop" whenever the selection changes.
+  const pop = useSharedValue(1);
+  const bandStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
+  const bump = () => pop.set(withSequence(withTiming(1.045, { duration: 90 }), withSpring(1, { damping: 12, stiffness: 260 })));
+
   const onIndex = (index: number) => {
     if (index === lastIndex.current || !items[index]) return;
     lastIndex.current = index;
+    bump();
     haptics.select();
     onChange(items[index].key);
   };
@@ -103,7 +112,7 @@ export function WheelPicker({
         const next = selectedIndex + (e.nativeEvent.actionName === 'increment' ? 1 : -1);
         if (items[next]) scrollToIndex(next);
       }}>
-      <View pointerEvents="none" style={styles.band} />
+      <Animated.View pointerEvents="none" style={[styles.band, bandStyle]} />
       <Animated.ScrollView
         ref={scrollRef}
         onScroll={onScroll}
@@ -124,6 +133,7 @@ export function WheelPicker({
               scrollToIndex(i);
               // Tapping the row already in the middle doesn't scroll, so select it directly.
               lastIndex.current = i;
+              bump();
               haptics.select();
               onChange(item.key);
             }}

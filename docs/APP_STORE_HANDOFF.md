@@ -109,3 +109,40 @@ npx eslint src
 - **מסד הנתונים:** כל הלוגיקה החשובה וההרשאות נמצאות ב־`supabase/migrations/0001`–`0004`. כולן כבר רצות בשרת.
 - **אל תשנו בלי תיאום:** את `bundleIdentifier`, את `scheme` ואת `EXPO_PUBLIC_BUSINESS_SLUG`.
 - **אתר:** גרסת ווב מתפרסמת ל־GitHub Pages (ענף `gh-pages`) עם `EXPO_BASE_URL=/torim`.
+
+
+## 9. עדכון: הנפשות ותוכן אינטראקטיבי (גרסה חדשה ל־TestFlight)
+
+נוספו ספריות נייטיב חדשות (`expo-video`, `expo-sensors`, ו־`react-native-gesture-handler` ברמת השורש), לכן **צריך build חדש**. עדכון OTA לא יספיק.
+
+```bash
+git pull
+```
+
+```bash
+npm install
+```
+
+```bash
+npx eas-cli@latest build -p ios --profile production
+```
+
+```bash
+npx eas-cli@latest submit -p ios --latest
+```
+
+**מה חדש:**
+- **וידאו רקע** בלופ במסך הכניסה ובראש מסך הבית, עם שכבה כהה מעליו. הקבצים: `assets/video/hero-loop.mp4` (0.34MB) ו־`hero-poster.jpg`.
+- **Parallax:** הווידאו בבית זז לאט יותר מהגלילה, והכותרת דועכת בגלילה.
+- **הטיית הטלפון:** הווידאו זז קלות לפי האקסלרומטר. לא נדרשת הרשאה; `motionPermission: false` ב־app.json.
+- **"לפני / אחרי"** בבית: גוררים את הפס או מקישים על התמונה. הקבצים ב־`assets/gallery/`, וההגדרה ב־`src/lib/media.ts`.
+- **קונפטי** בצבעי המותג ורטט כשהתור נקבע.
+- **שלד טעינה מהבהב** (shimmer) במקום מסך ריק.
+- **בחירת שעה:** הפס האמצעי בגלגלת "קופץ" בכל שינוי. שורות הטיפולים מתכווצות קלות בלחיצה.
+- כל ההנפשות נכבות כשבטלפון מופעלת ההגדרה "הפחתת תנועה" (נגישות).
+
+**לפני פרסום בחנות:**
+- **תמונות "לפני/אחרי":** אלה שבאפליקציה כרגע הן **איורי המחשה** (מסומנות "המחשה"). צריך להחליף אותן בתמונות אמיתיות של עבודות הילה, באישור הלקוחות: מחליפים את הקבצים ב־`assets/gallery/` ומעדכנים את `illustration: false` ב־`src/lib/media.ts`.
+- **הווידאו:** אנימציה ממותגת (אור, חלקיקים וקו גבה). אפשר להחליף אותו בצילום אמיתי מהסטודיו באותו שם קובץ: לאורך, 5–10 שניות, בלי קול, מתחת ל־5MB. דחיסה מומלצת:
+  `ffmpeg -i in.mov -vf scale=720:-2 -c:v libx264 -crf 27 -preset slow -an -movflags +faststart assets/video/hero-loop.mp4`
+- **מקור הווידאו והאיורים** נמצא ב־`tools/media/` (`render.js`, `render-before-after.js`).

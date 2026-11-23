@@ -57,12 +57,14 @@ function Stroke({
   opacity = 1,
   delay,
   duration,
+  color,
 }: {
   c: Cubic;
   width: number;
   opacity?: number;
   delay: number;
   duration: number;
+  color: string;
 }) {
   const length = cubicLength(c);
   const reduce = useReducedMotion();
@@ -75,7 +77,7 @@ function Stroke({
   return (
     <AnimatedPath
       d={cubic(c)}
-      stroke={colors.accent}
+      stroke={color}
       strokeOpacity={opacity}
       strokeWidth={width}
       strokeLinecap="round"
@@ -91,7 +93,16 @@ function Stroke({
  * pencil outline and then filled in, the legs of the ה are drawn, and the fine
  * hairs appear last. Afterwards it breathes slowly. Respects Reduce Motion.
  */
-export function BrowMark({ width = 160, style }: { width?: number; style?: StyleProp<ViewStyle> }) {
+export function BrowMark({
+  width = 160,
+  style,
+  color = colors.accent,
+}: {
+  width?: number;
+  style?: StyleProp<ViewStyle>;
+  /** Override the brand colour, e.g. white on top of the video. */
+  color?: string;
+}) {
   const reduce = useReducedMotion();
   const fill = useSharedValue(reduce ? 1 : 0);
   const breathe = useSharedValue(1);
@@ -115,13 +126,13 @@ export function BrowMark({ width = 160, style }: { width?: number; style?: Style
       importantForAccessibility="no-hide-descendants">
       <Animated.View style={[{ flex: 1 }, glow]}>
         <Svg width="100%" height="100%" viewBox="283 296 470 430">
-          <Stroke c={ARCH_TOP} width={5} delay={0} duration={1000} />
-          <Stroke c={ARCH_BOTTOM} width={5} delay={120} duration={1000} />
-          <AnimatedPath d={ARCH_FILL} fill={colors.accent} animatedProps={fillProps} />
-          <Stroke c={line(716, 420, 708)} width={40} delay={900} duration={650} />
-          <Stroke c={line(340, 548, 708)} width={40} delay={1200} duration={500} />
+          <Stroke c={ARCH_TOP} width={5} delay={0} duration={1000} color={color} />
+          <Stroke c={ARCH_BOTTOM} width={5} delay={120} duration={1000} color={color} />
+          <AnimatedPath d={ARCH_FILL} fill={color} animatedProps={fillProps} />
+          <Stroke c={line(716, 420, 708)} width={40} delay={900} duration={650} color={color} />
+          <Stroke c={line(340, 548, 708)} width={40} delay={1200} duration={500} color={color} />
           {HAIRS.map((c, i) => (
-            <Stroke key={i} c={c} width={9} opacity={0.6} delay={1500 + i * 90} duration={380} />
+            <Stroke key={i} c={c} width={9} opacity={0.6} delay={1500 + i * 90} duration={380} color={color} />
           ))}
         </Svg>
       </Animated.View>

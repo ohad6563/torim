@@ -8,17 +8,17 @@ import { spacing } from '@/theme';
 export const STUDIO_NAME = process.env.EXPO_PUBLIC_STUDIO_NAME || 'הגבות של הילה';
 
 /** Brand header of the sign-in and sign-up screens. */
-export function AuthHero({ subtitle, compact }: { subtitle: string; compact?: boolean }) {
+export function AuthHero({ subtitle, compact, onDark }: { subtitle: string; compact?: boolean; onDark?: boolean }) {
   return (
     <View style={[styles.hero, compact && styles.compact]}>
-      <BrowMark width={compact ? 84 : 116} />
+      <BrowMark width={compact ? 84 : 116} color={onDark ? '#FFFFFF' : undefined} />
       <Animated.View entering={FadeInDown.delay(400).duration(700)}>
-        <Txt variant={compact ? 'h1' : 'display'} weight="light" center>
+        <Txt variant={compact ? 'h1' : 'display'} weight="light" center color={onDark ? '#FFFFFF' : undefined}>
           {STUDIO_NAME}
         </Txt>
       </Animated.View>
       <Animated.View entering={FadeInDown.delay(600).duration(700)}>
-        <Txt muted center>
+        <Txt muted={!onDark} center color={onDark ? 'rgba(255,255,255,0.78)' : undefined}>
           {subtitle}
         </Txt>
       </Animated.View>

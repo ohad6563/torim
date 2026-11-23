@@ -12,6 +12,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { I18nManager, Platform } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { PushManager } from '@/components/push-manager';
@@ -66,6 +67,7 @@ export default function RootLayout() {
   if (!ready) return null;
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaProvider style={{ backgroundColor: colors.background }}>
       <ThemeProvider value={navTheme}>
         <StatusBar style={colors.isDark ? 'light' : 'dark'} />
@@ -111,5 +113,6 @@ export default function RootLayout() {
         )}
       </ThemeProvider>
     </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

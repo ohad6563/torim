@@ -1,18 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router, useLocalSearchParams, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AuthHero } from '@/components/auth-hero';
 import { SocialButtons } from '@/components/social-buttons';
-import { ErrorBox, Row, Screen, Txt, type IconName } from '@/components/ui';
+import { VideoBackdrop } from '@/components/video-backdrop';
+import { ErrorBox, Row, Txt, type IconName } from '@/components/ui';
 import { useAuth } from '@/context/auth';
 import { errorMessage } from '@/lib/errors';
 import { haptics } from '@/lib/haptics';
 import { safeNext } from '@/lib/nav';
 import { signInWithApple, signInWithGoogle } from '@/lib/social-auth';
-import { colors, radius, spacing } from '@/theme';
+import { MAX_WIDTH, radius, spacing } from '@/theme';
 
 const PERKS: { icon: IconName; text: string }[] = [
   { icon: 'time-outline', text: 'קביעת תור בכמה שניות, 24/7' },
@@ -50,51 +53,69 @@ export default function Login() {
   }
 
   return (
-    <Screen
-      edges={['top', 'bottom']}
-      footer={
-        <>
-          <SocialButtons busy={busy} onGoogle={() => run('google')} onApple={() => run('apple')} />
+    <View style={styles.root}>
+      <StatusBar style="light" />
+      {/* Looping studio video behind everything, darkened so the text stays readable. */}
+      <VideoBackdrop />
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.column}>
+            <AuthHero subtitle="ברוכים הבאים לסטודיו" onDark />
+            <View style={styles.perks}>
+              {PERKS.map((p, i) => (
+                <Animated.View key={p.text} entering={FadeInDown.delay(900 + i * 120).duration(600)}>
+                  <Row gap={spacing.md}>
+                    <View style={styles.perkIcon}>
+                      <Ionicons name={p.icon} size={18} color="#FFFFFF" />
+                    </View>
+                    <Txt color="#FFFFFF" style={{ flex: 1 }}>
+                      {p.text}
+                    </Txt>
+                  </Row>
+                </Animated.View>
+              ))}
+            </View>
+            <ErrorBox message={error} />
+          </View>
+        </ScrollView>
+        <Animated.View entering={FadeInDown.delay(1300).duration(700)} style={styles.footer}>
+          <SocialButtons busy={busy} onGoogle={() => run('google')} onApple={() => run('apple')} onDark />
           <Pressable onPress={() => router.push('/privacy')} accessibilityRole="link" style={{ paddingTop: spacing.xs }}>
-            <Txt variant="tiny" faint center>
+            <Txt variant="tiny" center color="rgba(255,255,255,0.6)">
               בכניסה את/ה מאשר/ת את{' '}
-              <Txt variant="tiny" muted style={{ textDecorationLine: 'underline' }}>
+              <Txt variant="tiny" color="rgba(255,255,255,0.85)" style={{ textDecorationLine: 'underline' }}>
                 מדיניות הפרטיות
               </Txt>
             </Txt>
           </Pressable>
-        </>
-      }>
-      <AuthHero subtitle="ברוכים הבאים לסטודיו" />
-
-      <View style={styles.perks}>
-        {PERKS.map((p, i) => (
-          <Animated.View key={p.text} entering={FadeInDown.delay(900 + i * 120).duration(600)}>
-            <Row gap={spacing.md}>
-              <View style={styles.perkIcon}>
-                <Ionicons name={p.icon} size={18} color={colors.text} />
-              </View>
-              <Txt style={{ flex: 1 }}>{p.text}</Txt>
-            </Row>
-          </Animated.View>
-        ))}
-      </View>
-
-      <ErrorBox message={error} />
-    </Screen>
+        </Animated.View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#0b0807' },
+  safe: { flex: 1 },
+  scroll: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, justifyContent: 'center' },
+  column: { width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center', gap: spacing.lg },
   perks: { gap: spacing.md, paddingHorizontal: spacing.sm, marginTop: spacing.sm },
   perkIcon: {
     width: 38,
     height: 38,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  footer: {
+    width: '100%',
+    maxWidth: MAX_WIDTH,
+    alignSelf: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
   },
 });

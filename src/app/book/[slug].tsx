@@ -16,11 +16,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Confetti } from '@/components/confetti';
 import { DateStrip } from '@/components/date-strip';
 import { RemindersCard } from '@/components/reminders-card';
 import { withAccount } from '@/components/owner-gate';
 import { SlotGrid } from '@/components/slot-grid';
-import { Appear, Button, EmptyState, ErrorBox, Field, IconButton, Loading, Row, Screen, Txt } from '@/components/ui';
+import { Appear, Button, EmptyState, ErrorBox, Field, IconButton, Loading, PressableScale, Row, Screen, Txt } from '@/components/ui';
 import { useAuth } from '@/context/auth';
 import { usePublicBusiness } from '@/hooks/use-public-business';
 import { useSlots } from '@/hooks/use-slots';
@@ -182,13 +183,7 @@ function BookFlow() {
             <View style={styles.list}>
               {data.services.map((s, i) => (
                 <Appear key={s.id} index={i}>
-                  <Pressable
-                    onPress={() => {
-                      haptics.select();
-                      pickService(s);
-                    }}
-                    accessibilityRole="button"
-                    style={({ pressed }) => [styles.serviceRow, pressed && { opacity: 0.6 }]}>
+                  <PressableScale onPress={() => pickService(s)} style={styles.serviceRow} accessibilityLabel={s.name}>
                     <View style={{ flex: 1, gap: 2 }}>
                       <Txt variant="h3">{s.name}</Txt>
                       <Txt variant="small" muted>
@@ -201,7 +196,7 @@ function BookFlow() {
                       </Txt>
                     ) : null}
                     <Ionicons name="chevron-back" size={18} color={colors.textMuted} />
-                  </Pressable>
+                  </PressableScale>
                 </Appear>
               ))}
               {data.services.length === 0 ? <Txt muted>אין כרגע טיפולים זמינים לקביעה אונליין.</Txt> : null}
@@ -342,6 +337,7 @@ function Success({
 
   return (
     <SafeAreaView style={[styles.screen, styles.success]} edges={['top', 'bottom']}>
+      <Confetti />
       <View style={styles.successBadgeWrap}>
         <Animated.View style={[styles.successRing, ringStyle]} />
         <Animated.View entering={ZoomIn.springify().damping(12)} style={styles.successBadge}>

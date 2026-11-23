@@ -1,17 +1,32 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Linking, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
+import Animated, {
+  Extrapolation,
+  FadeIn,
+  FadeInDown,
+  interpolate,
+  useAnimatedReaction,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scheduleOnRN } from 'react-native-worklets';
 
+import { BeforeAfter } from '@/components/before-after';
 import { BrowMark } from '@/components/brow-mark';
 import { MyAppointmentCard } from '@/components/my-appointment-card';
-import { Appear, Button, Card, EmptyState, IconButton, Loading, Row, Txt } from '@/components/ui';
+import { Appear, Button, Card, EmptyState, IconButton, Loading, PressableScale, Row, Txt } from '@/components/ui';
+import { VideoBackdrop } from '@/components/video-backdrop';
 import { useAuth } from '@/context/auth';
 import { useMyAppointments } from '@/hooks/use-my-appointments';
 import { usePublicBusiness } from '@/hooks/use-public-business';
 import { formatDuration, formatPhone, formatPrice, timeRange, todayIn, WEEKDAYS, weekdayOf } from '@/lib/dates';
 import { whatsappUrl } from '@/lib/links';
+import { BEFORE_AFTER } from '@/lib/media';
 import { colors, MAX_WIDTH, radius, spacing } from '@/theme';
 
 /**
@@ -24,6 +39,24 @@ export function BusinessHome({ slug }: { slug: string }) {
   const { upcoming } = useMyAppointments(slug);
   const { width } = useWindowDimensions();
   const wide = width >= 900;
+  const insets = useSafeAreaInsets();
+
+  // Scroll position drives the parallax video and the hero fading out.
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.set(e.contentOffset.y);
+  });
+  const heroFade = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [0, 320], [1, 0], Extrapolation.CLAMP),
+    transform: [{ translateY: interpolate(scrollY.value, [0, 320], [0, -40], Extrapolation.CLAMP) }],
+  }));
+  const [pastHero, setPastHero] = useState(false);
+  useAnimatedReaction(
+    () => scrollY.value > 480,
+    (past, prev) => {
+      if (past !== prev) scheduleOnRN(setPastHero, past);
+    },
+  );
   const firstName = profile?.full_name?.trim().split(/\s+/)[0];
 
   if (loading) return <Loading />;
@@ -50,33 +83,35 @@ export function BusinessHome({ slug }: { slug: string }) {
     router.push({ pathname: '/book/[slug]', params: serviceId ? { slug, service: serviceId } : { slug } });
 
   const hero = (
-    <View style={[styles.hero, wide && styles.heroWide]}>
+    <View style={[styles.heroBox, { paddingTop: insets.top + spacing.xxl, minHeight: (wide ? 640 : 560) + insets.top }]}>
+      <VideoBackdrop scrollY={scrollY} overlay="hero" />
+      <Animated.View style={[styles.hero, heroFade]}>
       <Animated.View entering={FadeIn.duration(900)} style={{ gap: spacing.xs }}>
         {firstName ? (
-          <Txt muted center>
+          <Txt center color="rgba(255,255,255,0.85)">
             היי {firstName} 👋
           </Txt>
         ) : null}
-        <Txt label variant="tiny" center>
+        <Txt label variant="tiny" center color="rgba(255,255,255,0.7)">
           {business.category ? `${business.category} · ` : ''}
           {business.address?.split(',').pop()?.trim() || 'סטודיו'}
         </Txt>
       </Animated.View>
-      <BrowMark width={wide ? 190 : 132} style={{ marginVertical: spacing.lg }} />
+      <BrowMark width={wide ? 170 : 120} color="#FFFFFF" style={{ marginVertical: spacing.lg }} />
       <Animated.View entering={FadeInDown.delay(500).duration(800)}>
-        <Txt variant="display" center style={wide && { fontSize: 64, lineHeight: 70 }}>
+        <Txt variant="display" center color="#FFFFFF" style={wide && { fontSize: 64, lineHeight: 70 }}>
           {business.name}
         </Txt>
       </Animated.View>
       {business.description ? (
         <Animated.View entering={FadeInDown.delay(750).duration(800)}>
-          <Txt muted center style={styles.tagline}>
+          <Txt center color="rgba(255,255,255,0.78)" style={styles.tagline}>
             {business.description}
           </Txt>
         </Animated.View>
       ) : null}
       <Animated.View entering={FadeInDown.delay(1000).duration(800)} style={styles.heroCta}>
-        <Button title="קביעת תור" icon="calendar-outline" onPress={() => book()} />
+        <Button title="קביעת תור" icon="calendar-outline" variant="inverse" onPress={() => book()} />
         <Row gap={spacing.md} style={{ justifyContent: 'center' }}>
           {business.phone ? (
             <IconButton filled icon="call-outline" label="התקשרות" onPress={() => Linking.openURL(`tel:${business.phone}`)} />
@@ -99,11 +134,12 @@ export function BusinessHome({ slug }: { slug: string }) {
           ) : null}
         </Row>
       </Animated.View>
+      </Animated.View>
     </View>
   );
 
   const content = (
-    <View style={[styles.content, wide && styles.contentWide]}>
+    <View style={styles.content}>
       {upcoming.length > 0 ? (
         <Appear delay={300}>
           <Txt label variant="tiny" style={styles.sectionLabel}>
@@ -124,11 +160,10 @@ export function BusinessHome({ slug }: { slug: string }) {
         <View style={styles.services}>
           {services.map((s, i) => (
             <Appear key={s.id} index={i} delay={200}>
-              <Pressable
+              <PressableScale
                 onPress={() => book(s.id)}
-                accessibilityRole="button"
                 accessibilityLabel={`${s.name}, ${formatDuration(s.duration_min)}${s.price !== null ? `, ${formatPrice(s.price)}` : ''}`}
-                style={({ pressed }) => [styles.serviceRow, pressed && { opacity: 0.6 }]}>
+                style={styles.serviceRow}>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Txt variant="h3">{s.name}</Txt>
                   <Txt variant="small" muted>
@@ -143,12 +178,30 @@ export function BusinessHome({ slug }: { slug: string }) {
                 <View style={styles.serviceArrow}>
                   <Ionicons name="arrow-back" size={16} color={colors.text} />
                 </View>
-              </Pressable>
+              </PressableScale>
             </Appear>
           ))}
           {services.length === 0 ? <Txt muted>בקרוב יתווספו טיפולים לקביעה אונליין.</Txt> : null}
         </View>
       </View>
+
+      {BEFORE_AFTER.length > 0 ? (
+        <Appear delay={300}>
+          <Txt label variant="tiny" style={styles.sectionLabel}>
+            לפני / אחרי
+          </Txt>
+          <View style={{ gap: spacing.lg }}>
+            {BEFORE_AFTER.map((item) => (
+              <View key={item.title} style={{ gap: spacing.sm }}>
+                <BeforeAfter item={item} />
+                <Txt variant="small" muted center>
+                  {item.title} · גררו את הפס כדי לראות את ההבדל
+                </Txt>
+              </View>
+            ))}
+          </View>
+        </Appear>
+      ) : null}
 
       <Appear delay={400}>
         <Txt label variant="tiny" style={styles.sectionLabel}>
@@ -213,28 +266,39 @@ export function BusinessHome({ slug }: { slug: string }) {
   );
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
-      <Animated.ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={[styles.page, wide && styles.pageWide]}>
-          {hero}
-          {content}
+    <View style={styles.screen}>
+      {/* Light status bar over the dark video; dark once the page is scrolled past it. */}
+      <StatusBar style={pastHero ? (colors.isDark ? 'light' : 'dark') : 'light'} />
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false}>
+        {hero}
+        <View style={styles.sheet}>
+          <View style={styles.page}>{content}</View>
         </View>
       </Animated.ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
+const insetsPad = Platform.OS === 'web' ? 0 : 12;
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  scroll: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl },
+  heroBox: { justifyContent: 'flex-end', paddingHorizontal: spacing.lg, paddingBottom: spacing.xxxl + spacing.lg, overflow: 'hidden' },
+  hero: { alignItems: 'center', gap: spacing.sm, width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center' },
+  // Content slides up over the bottom of the video like a sheet.
+  sheet: {
+    marginTop: -spacing.xl,
+    backgroundColor: colors.background,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingTop: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xxl + insetsPad,
+  },
   page: { width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center' },
-  pageWide: { maxWidth: 1120, flexDirection: 'row', gap: spacing.xxxl, alignItems: 'flex-start' },
-  hero: { alignItems: 'center', paddingTop: spacing.xxxl, paddingBottom: spacing.xxl, gap: spacing.sm },
-  heroWide: { flex: 1, paddingTop: spacing.xxxl * 2, ...(Platform.OS === 'web' ? { position: 'sticky' as never, top: 0 } : null) },
   tagline: { maxWidth: 360, marginTop: spacing.sm },
   heroCta: { width: '100%', maxWidth: 360, gap: spacing.lg, marginTop: spacing.xl },
   content: { gap: spacing.xxl },
-  contentWide: { flex: 1, paddingTop: spacing.xxxl * 2 },
   sectionLabel: { marginBottom: spacing.md },
   services: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   serviceRow: {
