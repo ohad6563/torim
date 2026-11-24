@@ -28,7 +28,7 @@ cp dist/index.html dist/404.html && touch dist/.nojekyll
 Then replace the contents of `gh-pages` with `dist/` (for example through a `git worktree`) and push.
 
 **iOS build** (EAS project owned by `ohad6563s-team`):
-- Push a tag `testflight-*` to trigger `.github/workflows/testflight.yml`, which runs `eas build --auto-submit` using the `EXPO_TOKEN` secret.
+- Push to the `testflight` branch (`git push -f origin HEAD:testflight`) to trigger `.github/workflows/testflight.yml`, which runs `eas build --auto-submit` using the `EXPO_TOKEN` secret.
 - Alternatively, follow `docs/TESTFLIGHT_UPDATE.md` by hand.
 - Adding a native library requires a new build. JS-only changes still need a build too, because OTA updates are not set up.
 
@@ -97,4 +97,4 @@ Ask before assuming any of these; update this list when one is resolved.
   - Legal details in `.env`: `EXPO_PUBLIC_STUDIO_LEGAL_NAME`, `_BUSINESS_ID`, `_ADDRESS`, `_EMAIL`, `_PHONE`.
   - Apple Developer account in Hila's/the studio's name (guideline 4.2.6), then enable the Apple provider in Supabase with client ID `com.hilabrows.app`.
   - A lawyer's review of the terms / privacy texts.
-- **Unknown:** whether an App Store Connect API key is stored in EAS. If the first `testflight-*` workflow run fails at submit, the brother (ASC admin) runs `npx eas-cli@latest credentials -p ios` → App Store Connect API Key.
+- **Unknown:** whether an App Store Connect API key is stored in EAS. If the first TestFlight workflow run fails at submit, the brother (ASC admin) runs `npx eas-cli@latest credentials -p ios` → App Store Connect API Key.

@@ -1,7 +1,6 @@
 # Build the iOS app on EAS and upload it to TestFlight. Runs only when asked for, because
-# EAS free builds are limited per month: push a tag named testflight-<anything>
-# (e.g. `git tag testflight-2026-11-24 && git push origin testflight-2026-11-24`),
-# or Actions → "TestFlight" → Run workflow.
+# EAS free builds are limited per month: push the commit to build to the `testflight`
+# branch (`git push -f origin HEAD:testflight`), or Actions → "TestFlight" → Run workflow.
 # Needs the repository secret EXPO_TOKEN (an access token from expo.dev of an account in
 # the "ohad6563s-team" organization). Apple credentials and the App Store Connect API key
 # are stored in EAS.
@@ -10,7 +9,7 @@ name: TestFlight
 on:
   workflow_dispatch:
   push:
-    tags: ['testflight-*']
+    branches: [testflight]
 
 concurrency:
   group: testflight
