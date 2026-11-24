@@ -104,8 +104,8 @@ export function formatPrice(price: number | null | undefined): string {
 }
 
 /** Normalise an Israeli phone number to digits, e.g. "+972 54-123-4567" -> "0541234567". */
-export function normalizePhone(p: string): string {
-  const digits = p.replace(/[^\d+]/g, '');
+export function normalizePhone(p: string | null | undefined): string {
+  const digits = (p ?? '').replace(/[^\d+]/g, '');
   if (digits.startsWith('+972')) return '0' + digits.slice(4);
   if (digits.startsWith('972')) return '0' + digits.slice(3);
   return digits;
@@ -116,7 +116,9 @@ export function isValidPhone(p: string): boolean {
 }
 
 /** "0541234567" -> "054-123-4567" */
-export function formatPhone(p: string): string {
+/** Display form of a phone number; '' when there is none (e.g. a deleted account). */
+export function formatPhone(p: string | null | undefined): string {
+  if (!p) return '';
   const n = normalizePhone(p);
   if (/^05\d{8}$/.test(n)) return `${n.slice(0, 3)}-${n.slice(3, 6)}-${n.slice(6)}`;
   if (/^0\d{8}$/.test(n)) return `${n.slice(0, 2)}-${n.slice(2, 5)}-${n.slice(5)}`;

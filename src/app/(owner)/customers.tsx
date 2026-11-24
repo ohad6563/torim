@@ -30,7 +30,7 @@ export default function Customers() {
     const digits = /\d/.test(q) ? normalizePhone(q).replace(/^0/, '') : '';
     if (!q) return data ?? [];
     return (data ?? []).filter(
-      (c) => c.name.toLowerCase().includes(q) || (digits.length > 0 && c.phone.includes(digits)),
+      (c) => (c.name ?? '').toLowerCase().includes(q) || (digits.length > 0 && !!c.phone?.includes(digits)),
     );
   }, [data, query]);
 
@@ -56,7 +56,7 @@ export default function Customers() {
               <Row gap={spacing.md}>
                 <View style={styles.avatar}>
                   <Txt bold color={colors.primary}>
-                    {c.name.trim().charAt(0)}
+                    {(c.name ?? '').trim().charAt(0) || '·'}
                   </Txt>
                 </View>
                 <View style={{ flex: 1 }}>

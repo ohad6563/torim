@@ -43,7 +43,8 @@ export type Customer = {
   id: string;
   business_id: string;
   name: string;
-  phone: string;
+  /** null for walk-ins without a number and for customers who deleted their account. */
+  phone: string | null;
   notes: string | null;
   created_at: string;
 };
@@ -64,7 +65,7 @@ export type Appointment = {
   source: 'online' | 'owner';
   local_date: string;
   customer_name: string;
-  customer_phone: string;
+  customer_phone: string | null;
 };
 
 export type PublicAppointment = {

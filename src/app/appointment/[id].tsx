@@ -82,9 +82,9 @@ function AppointmentDetails() {
       confirmText: 'שליחה',
       cancelText: 'לא עכשיו',
     });
-    if (notify) {
+    if (notify && appt?.customer_phone) {
       Linking.openURL(
-        whatsappUrl(appt!.customer_phone, `היי ${appt!.customer_name}, התור שלך ב${business.name} ל${when} בוטל.`),
+        whatsappUrl(appt.customer_phone, `היי ${appt!.customer_name}, התור שלך ב${business.name} ל${when} בוטל.`),
       );
     }
   }
@@ -98,9 +98,11 @@ function AppointmentDetails() {
           </Txt>
           <StatusBadge status={appt.status} />
         </Row>
-        <Txt muted>{formatPhone(appt.customer_phone)}</Txt>
+        {appt.customer_phone ? <Txt muted>{formatPhone(appt.customer_phone)}</Txt> : null}
         <Row style={{ flexWrap: 'wrap' }}>
-          <Button small variant="secondary" icon="call-outline" title="חיוג" onPress={() => Linking.openURL(`tel:${appt.customer_phone}`)} />
+          {appt.customer_phone ? (
+            <Button small variant="secondary" icon="call-outline" title="חיוג" onPress={() => Linking.openURL(`tel:${appt.customer_phone}`)} />
+          ) : null}
           <Button
             small
             variant="secondary"
@@ -108,7 +110,7 @@ function AppointmentDetails() {
             title="וואטסאפ"
             onPress={() =>
               Linking.openURL(
-                whatsappUrl(appt.customer_phone, `היי ${appt.customer_name}, תזכורת לתור שלך ב${business.name} ${when}.`),
+                whatsappUrl(appt.customer_phone ?? '', `היי ${appt.customer_name}, תזכורת לתור שלך ב${business.name} ${when}.`),
               )
             }
           />

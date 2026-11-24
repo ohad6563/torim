@@ -7,16 +7,17 @@ import {
   Heebo_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/heebo';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, type ErrorBoundaryProps } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { I18nManager, Platform } from 'react-native';
+import { I18nManager, Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { PushManager } from '@/components/push-manager';
 import { SetupNeeded } from '@/components/setup-needed';
+import { Button, EmptyState } from '@/components/ui';
 import { AuthProvider } from '@/context/auth';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { colors, family } from '@/theme';
@@ -48,6 +49,23 @@ const navTheme = {
     border: colors.border,
   },
 };
+
+/**
+ * If a screen throws while rendering, show a message with "try again" instead of
+ * letting the error close the whole app (in release builds an uncaught render error is fatal).
+ */
+export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', backgroundColor: colors.background, padding: 24 }}>
+      <EmptyState
+        icon="alert-circle-outline"
+        title="משהו השתבש במסך הזה"
+        message="אפשר לנסות שוב. אם זה חוזר, ספרו לנו."
+        action={<Button title="נסו שוב" onPress={retry} />}
+      />
+    </View>
+  );
+}
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({

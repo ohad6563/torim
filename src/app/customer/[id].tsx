@@ -48,7 +48,7 @@ function CustomerDetails() {
   function startEditing() {
     if (!customer) return;
     setName(customer.name);
-    setPhone(customer.phone);
+    setPhone(customer.phone ?? '');
     setNotes(customer.notes ?? '');
     setError(null);
     setEditing(true);
@@ -110,16 +110,18 @@ function CustomerDetails() {
             </Txt>
             <Button small variant="ghost" icon="create-outline" title="עריכה" onPress={startEditing} />
           </Row>
-          <Txt muted>{formatPhone(customer.phone)}</Txt>
+          {customer.phone ? <Txt muted>{formatPhone(customer.phone)}</Txt> : null}
           {customer.notes ? <Txt variant="small">{customer.notes}</Txt> : null}
           <Row style={{ flexWrap: 'wrap' }}>
-            <Button small variant="secondary" icon="call-outline" title="חיוג" onPress={() => Linking.openURL(`tel:${customer.phone}`)} />
+            {customer.phone ? (
+              <Button small variant="secondary" icon="call-outline" title="חיוג" onPress={() => Linking.openURL(`tel:${customer.phone}`)} />
+            ) : null}
             <Button
               small
               variant="secondary"
               icon="logo-whatsapp"
               title="וואטסאפ"
-              onPress={() => Linking.openURL(whatsappUrl(customer.phone, `היי ${customer.name}, `))}
+              onPress={() => Linking.openURL(whatsappUrl(customer.phone ?? '', `היי ${customer.name}, `))}
             />
             <Button
               small

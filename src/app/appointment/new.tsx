@@ -104,7 +104,7 @@ function NewAppointment() {
   function pickCustomer(c: Customer) {
     setPickedCustomer(c);
     setName(c.name);
-    setPhone(c.phone);
+    setPhone(c.phone ?? '');
     setMatches([]);
   }
 
