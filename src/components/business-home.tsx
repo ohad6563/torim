@@ -16,11 +16,10 @@ import Animated, {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { BrowMark } from '@/components/brow-mark';
 import { MyAppointmentCard } from '@/components/my-appointment-card';
 import { Appear, Button, Card, EmptyState, IconButton, Loading, PressableScale, Row, Txt } from '@/components/ui';
 import { ServiceQuiz } from '@/components/service-quiz';
-import { VideoBackdrop } from '@/components/video-backdrop';
+import { BrowScene } from '@/components/brow-scene';
 import { useAuth } from '@/context/auth';
 import { useMyAppointments } from '@/hooks/use-my-appointments';
 import { usePublicBusiness } from '@/hooks/use-public-business';
@@ -83,7 +82,7 @@ export function BusinessHome({ slug }: { slug: string }) {
 
   const hero = (
     <View style={[styles.heroBox, { paddingTop: insets.top + spacing.xxl, minHeight: (wide ? 640 : 560) + insets.top }]}>
-      <VideoBackdrop scrollY={scrollY} overlay="hero" />
+      <BrowScene scrollY={scrollY} overlay="hero" />
       <Animated.View style={[styles.hero, heroFade]}>
       <Animated.View entering={FadeIn.duration(900)} style={{ gap: spacing.xs }}>
         {firstName ? (
@@ -96,7 +95,8 @@ export function BusinessHome({ slug }: { slug: string }) {
           {business.address?.split(',').pop()?.trim() || 'סטודיו'}
         </Txt>
       </Animated.View>
-      <BrowMark width={wide ? 170 : 120} color="#FFFFFF" style={{ marginVertical: spacing.lg }} />
+      {/* The live brow in the background is the mark here; leave room for it. */}
+      <View style={{ height: wide ? 200 : 150 }} />
       <Animated.View entering={FadeInDown.delay(500).duration(800)}>
         <Txt variant="display" center color="#FFFFFF" style={wide && { fontSize: 64, lineHeight: 70 }}>
           {business.name}

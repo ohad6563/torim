@@ -8,7 +8,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AuthHero } from '@/components/auth-hero';
 import { SocialButtons } from '@/components/social-buttons';
-import { VideoBackdrop } from '@/components/video-backdrop';
+import { BrowScene } from '@/components/brow-scene';
 import { ErrorBox, Row, Txt, type IconName } from '@/components/ui';
 import { useAuth } from '@/context/auth';
 import { errorMessage } from '@/lib/errors';
@@ -56,7 +56,7 @@ export default function Login() {
     <View style={styles.root}>
       <StatusBar style="light" />
       {/* Looping studio video behind everything, darkened so the text stays readable. */}
-      <VideoBackdrop />
+      <BrowScene />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.column}>

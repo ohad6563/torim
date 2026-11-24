@@ -16,7 +16,7 @@ npx eslint src            # lint (npm run lint); React Compiler rules are enforc
 npx expo start --web      # dev server
 ```
 
-There is no test suite. Verify changes with typecheck, lint and, for UI, a Playwright run against a web export. For that, use `require('playwright')` with the pre-installed Chromium, mock `https://demo.supabase.co/**`, and wait with `waitUntil: 'load'`. Do not use `networkidle`: the looping hero video never goes idle.
+There is no test suite. Verify changes with typecheck, lint and, for UI, a Playwright run against a web export. For that, use `require('playwright')` with the pre-installed Chromium, mock `https://demo.supabase.co/**`, and wait with `waitUntil: 'load'`. Do not use `networkidle`: the hero scene's animations keep running.
 
 **Deploy the web build** to the `gh-pages` branch:
 
@@ -71,6 +71,8 @@ Then replace the contents of `gh-pages` with `dist/` (for example through a `git
 
 ## UI conventions
 
+- The hero background on home and sign-in is `src/components/brow-scene.tsx`: a live SVG brow (hairs generated once from a seeded RNG) in depth layers, driven by `useTilt` (accelerometer on phones, mouse on the web).
+
 - Use the components in `src/components/ui.tsx` (`Txt`, `Button`, `Card`, `Screen`, `PressableScale`, `Chip`, `Skeleton`…). Colors, spacing and fonts come from `src/theme.ts`; the shipped palette is `porcelain`. Keep text at a contrast of at least 4.5:1, which the accessibility statement promises.
 - **RTL pitfalls:**
   - Natively, the app is forced to RTL, and `start`/`left` flip.
@@ -94,6 +96,5 @@ Ask before assuming any of these; update this list when one is resolved.
 - **Before store submission (not before):**
   - Legal details in `.env`: `EXPO_PUBLIC_STUDIO_LEGAL_NAME`, `_BUSINESS_ID`, `_ADDRESS`, `_EMAIL`, `_PHONE`.
   - Apple Developer account in Hila's/the studio's name (guideline 4.2.6), then enable the Apple provider in Supabase with client ID `com.hilabrows.app`.
-  - Real studio video/photos to replace `assets/video/hero-loop.mp4` and the poster.
   - A lawyer's review of the terms / privacy texts.
 - **Unknown:** whether an App Store Connect API key is stored in EAS. If the first `testflight-*` workflow run fails at submit, the brother (ASC admin) runs `npx eas-cli@latest credentials -p ios` → App Store Connect API Key.
