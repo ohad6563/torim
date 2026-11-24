@@ -1,0 +1,33 @@
+# Build the iOS app on EAS and upload it to TestFlight. Runs only when started by hand
+# (Actions → "TestFlight" → Run workflow, or `gh workflow run testflight.yml`), because
+# EAS free builds are limited per month.
+# Needs the repository secret EXPO_TOKEN (an access token from expo.dev of an account in
+# the "ohad6563s-team" organization). Apple credentials and the App Store Connect API key
+# are stored in EAS.
+name: TestFlight
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - name: Build on EAS and submit to TestFlight
+        run: eas build -p ios --profile production --auto-submit --non-interactive --wait
