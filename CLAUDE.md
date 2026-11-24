@@ -84,3 +84,16 @@ Then replace the contents of `gh-pages` with `dist/` (for example through a `git
 
 - `docs/APP_STORE_HANDOFF.md`: the full store handoff (App Store Connect fields, privacy labels, test checklist).
 - `docs/TESTFLIGHT_UPDATE.md`: the minimal steps for a TestFlight update.
+
+## Open items (waiting on the owner)
+
+Ask before assuming any of these; update this list when one is resolved.
+
+- **Hila's admin email:** pending (owner is checking with Hila). Once known: `insert into reserved_admin_emails (email, business_slug) values ('<email>', 'hila-brows');` in the Supabase SQL Editor (account must sign in with Google/Apple).
+- **Cancellation / no-show policy:** pending (owner is checking with Hila). Set `EXPO_PUBLIC_STUDIO_CANCEL_HOURS` (default 24) and `EXPO_PUBLIC_STUDIO_NO_SHOW_POLICY` in `.env`; shown in terms and support pages.
+- **Before store submission (not before):**
+  - Legal details in `.env`: `EXPO_PUBLIC_STUDIO_LEGAL_NAME`, `_BUSINESS_ID`, `_ADDRESS`, `_EMAIL`, `_PHONE`.
+  - Apple Developer account in Hila's/the studio's name (guideline 4.2.6), then enable the Apple provider in Supabase with client ID `com.hilabrows.app`.
+  - Real studio video/photos to replace `assets/video/hero-loop.mp4` and the poster.
+  - A lawyer's review of the terms / privacy texts.
+- **Unknown:** whether an App Store Connect API key is stored in EAS. If the first `testflight-*` workflow run fails at submit, the brother (ASC admin) runs `npx eas-cli@latest credentials -p ios` → App Store Connect API Key.
