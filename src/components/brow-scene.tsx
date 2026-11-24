@@ -10,7 +10,6 @@ import Animated, {
   useSharedValue,
   withDelay,
   withRepeat,
-  withSequence,
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
@@ -19,10 +18,9 @@ import Svg, { Defs, Ellipse, Line, Path, RadialGradient, Stop } from 'react-nati
 import { useTilt } from '@/hooks/use-tilt';
 
 /**
- * Live, interactive hero background: a brow drawn hair by hair (like microblading),
- * over the brow-mapping guide lines artists draw, in depth layers that move strongly
- * with the phone's tilt (or the mouse on the web). A gold "foil" shine runs across the
- * hairs as the phone turns, and the studio light swings the other way.
+ * Hero background: a brow drawn hair by hair (like microblading) over the
+ * brow-mapping guide lines artists draw. The brow itself stays still; only the thin
+ * guide lines and marks drift a few pixels with the phone's tilt (or the mouse on the web).
  * With "Reduce Motion" on, it's a still picture.
  */
 export function BrowScene({
@@ -48,29 +46,17 @@ export function BrowScene({
     drawn.set(withDelay(250, withTiming(1, { duration: 2200, easing: Easing.out(Easing.cubic) })));
   }, [reduce, idle, drawn]);
 
-  const tx = useDerivedValue(() => tilt.x.value + (idle.value - 0.5) * 0.35);
-  const ty = useDerivedValue(() => tilt.y.value + (idle.value - 0.5) * 0.15);
+  const tx = useDerivedValue(() => tilt.x.value + (idle.value - 0.5) * 0.5);
+  const ty = useDerivedValue(() => tilt.y.value + (idle.value - 0.5) * 0.3);
   const parallax = useDerivedValue(() => (scrollY ? interpolate(scrollY.value, [-200, 0, 600], [-60, 0, 260]) : 0));
 
-  // One 3D stage, tilted with the phone; layers inside move by depth.
-  const stage = useAnimatedStyle(() => ({
-    transform: [
-      { perspective: 900 },
-      { translateY: parallax.value },
-      { rotateY: `${tx.value * 12}deg` },
-      { rotateX: `${-ty.value * 7}deg` },
-    ],
+  // Only the scroll parallax moves the whole scene.
+  const stage = useAnimatedStyle(() => ({ transform: [{ translateY: parallax.value }] }));
+  const lightStyle = useAnimatedStyle(() => ({ transform: [{ translateY: parallax.value * 0.4 }] }));
+  // The guide lines and marks drift a few pixels; the brow stays put.
+  const guidesStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: tx.value * -6 }, { translateY: ty.value * -4 }],
   }));
-  const layer = (depth: number) => () => {
-    'worklet';
-    return { transform: [{ translateX: tx.value * depth }, { translateY: ty.value * depth * 0.7 }] };
-  };
-  const lightStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: tx.value * -70 }, { translateY: ty.value * -40 + parallax.value * 0.4 }],
-  }));
-  const guidesStyle = useAnimatedStyle(layer(-14));
-  const browStyle = useAnimatedStyle(layer(22));
-  const nearStyle = useAnimatedStyle(layer(50));
 
   return (
     <View style={[StyleSheet.absoluteFill, styles.clip, style]} pointerEvents="none">
@@ -95,17 +81,12 @@ export function BrowScene({
           <Animated.View style={[StyleSheet.absoluteFill, guidesStyle]}>
             <Guides drawn={drawn} />
           </Animated.View>
-          <Animated.View style={[StyleSheet.absoluteFill, browStyle]}>
+          <View style={StyleSheet.absoluteFill}>
             {BANDS.map((band, i) => (
-              <Band key={i} index={i} hairs={band} drawn={drawn} tx={tx} />
+              <Band key={i} index={i} hairs={band} drawn={drawn} />
             ))}
-          </Animated.View>
+          </View>
         </View>
-        <Animated.View style={[StyleSheet.absoluteFill, nearStyle]}>
-          {FLOATERS.map((f, i) => (
-            <Floater key={i} f={f} reduce={reduce} />
-          ))}
-        </Animated.View>
       </Animated.View>
 
       <LinearGradient
@@ -171,52 +152,23 @@ const BANDS: Hair[][] = (() => {
   return bands;
 })();
 
-/** Small loose hairs floating in front, at different depths. */
-const FLOATERS = (() => {
-  const r = rng(31);
-  return Array.from({ length: 13 }, () => ({
-    left: `${4 + r() * 92}%` as const,
-    top: `${6 + r() * 80}%` as const,
-    size: 16 + r() * 22,
-    rot: r() * 360,
-    drift: 10 + r() * 18,
-    dur: 4200 + r() * 4000,
-    delay: r() * 2000,
-    opacity: 0.25 + r() * 0.45,
-  }));
-})();
-
 // ---------- layers ----------
 
-/** One slice of the brow: base hairs that appear in turn, plus a gold shine that follows the tilt. */
-function Band({ index, hairs, drawn, tx }: { index: number; hairs: Hair[]; drawn: SharedValue<number>; tx: SharedValue<number> }) {
+/** One slice of the brow; the slices appear in turn, from the head to the tail. */
+function Band({ index, hairs, drawn }: { index: number; hairs: Hair[]; drawn: SharedValue<number> }) {
   const center = (index + 0.5) / BAND_COUNT;
   const base = useAnimatedStyle(() => {
     const p = interpolate(drawn.value, [center * 0.8, center * 0.8 + 0.25], [0, 1], 'clamp');
     return { opacity: p, transform: [{ translateY: (1 - p) * 6 }] };
   });
-  const shine = useAnimatedStyle(() => {
-    const pos = (tx.value + 1) / 2; // 0..1 across the brow
-    const near = 1 - Math.min(1, Math.abs(pos - center) * 4.5);
-    return { opacity: drawn.value > center ? Math.max(0, near) * 0.75 : 0 };
-  });
   return (
-    <>
-      <Animated.View style={[StyleSheet.absoluteFill, base]}>
-        <Svg width="100%" height="100%" viewBox={`0 0 ${VB.w} ${VB.h}`}>
-          {hairs.map((h, i) => (
-            <Path key={i} d={h.d} stroke={h.light ? '#E3C2B4' : '#C9A96E'} strokeWidth={h.w} strokeLinecap="round" fill="none" opacity={0.85} />
-          ))}
-        </Svg>
-      </Animated.View>
-      <Animated.View style={[StyleSheet.absoluteFill, shine]}>
-        <Svg width="100%" height="100%" viewBox={`0 0 ${VB.w} ${VB.h}`}>
-          {hairs.map((h, i) => (
-            <Path key={i} d={h.d} stroke="#FFF1DC" strokeWidth={h.w + 0.2} strokeLinecap="round" fill="none" />
-          ))}
-        </Svg>
-      </Animated.View>
-    </>
+    <Animated.View style={[StyleSheet.absoluteFill, base]}>
+      <Svg width="100%" height="100%" viewBox={`0 0 ${VB.w} ${VB.h}`}>
+        {hairs.map((h, i) => (
+          <Path key={i} d={h.d} stroke={h.light ? '#E3C2B4' : '#C9A96E'} strokeWidth={h.w} strokeLinecap="round" fill="none" opacity={0.85} />
+        ))}
+      </Svg>
+    </Animated.View>
   );
 }
 
@@ -240,24 +192,6 @@ function Guides({ drawn }: { drawn: SharedValue<number> }) {
         {[head, arch, tail].map((p, i) => (
           <Path key={i} d={`M${p.x - 4} ${p.upper - 6}h8M${p.x} ${p.upper - 10}v8`} stroke="#FFF7EF" strokeWidth={0.7} opacity={0.6} />
         ))}
-      </Svg>
-    </Animated.View>
-  );
-}
-
-function Floater({ f, reduce }: { f: (typeof FLOATERS)[number]; reduce: boolean }) {
-  const t = useSharedValue(0);
-  useEffect(() => {
-    if (reduce) return;
-    t.set(withDelay(f.delay, withRepeat(withSequence(withTiming(1, { duration: f.dur, easing: Easing.inOut(Easing.sin) }), withTiming(0, { duration: f.dur, easing: Easing.inOut(Easing.sin) })), -1)));
-  }, [reduce, t, f]);
-  const style = useAnimatedStyle(() => ({
-    transform: [{ translateY: (t.value - 0.5) * f.drift }, { rotate: `${f.rot + t.value * 25}deg` }],
-  }));
-  return (
-    <Animated.View style={[{ position: 'absolute', left: f.left, top: f.top, width: f.size, height: f.size, opacity: f.opacity }, style]}>
-      <Svg width="100%" height="100%" viewBox="0 0 20 20">
-        <Path d="M3 16Q9 9 17 4" stroke="#E3C2B4" strokeWidth={1.1} strokeLinecap="round" fill="none" />
       </Svg>
     </Animated.View>
   );
