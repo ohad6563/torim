@@ -24,6 +24,15 @@ import { colors, family } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
+// In release builds, an uncaught JS error (e.g. thrown inside a button handler) is
+// "fatal" and closes the app. Report it as non-fatal instead, so the user stays in the
+// app; render errors are caught separately by the ErrorBoundary below.
+if (Platform.OS !== 'web' && !__DEV__) {
+  const errorUtils = (globalThis as { ErrorUtils?: { getGlobalHandler: () => (e: unknown, fatal?: boolean) => void; setGlobalHandler: (h: (e: unknown, fatal?: boolean) => void) => void } }).ErrorUtils;
+  const original = errorUtils?.getGlobalHandler();
+  if (errorUtils && original) errorUtils.setGlobalHandler((error) => original(error, false));
+}
+
 // The whole app is Hebrew, right-to-left.
 if (Platform.OS === 'web') {
   document.documentElement.dir = 'rtl';
