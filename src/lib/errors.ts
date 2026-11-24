@@ -13,6 +13,8 @@ export function errorMessage(err: unknown): string {
     [/NOT_SIGNED_IN/, 'צריך להתחבר כדי לקבוע תור.'],
     [/TOO_MANY_BOOKINGS/, 'אפשר להחזיק עד 3 תורים עתידיים. לתור נוסף בטלו אחד קיים או צרו קשר עם הסטודיו.'],
     [/NOTE_TOO_LONG|appointments_notes_len/, 'ההערה ארוכה מדי.'],
+    [/WAITLIST_LIMIT/, 'אפשר להיות ברשימת המתנה לעד 5 ימים בו־זמנית.'],
+    [/INVALID_DAY/, 'אי אפשר להצטרף לרשימת ההמתנה ליום הזה.'],
     [/PHONE_REQUIRED/, 'כדי לקבוע תור צריך להוסיף מספר טלפון בפרופיל.'],
     [/provider is not enabled|Unsupported provider/i, 'ההתחברות הזו עדיין לא הופעלה. נסו שוב בקרוב.'],
     [/profiles_phone_format/, 'מספר הטלפון לא תקין.'],

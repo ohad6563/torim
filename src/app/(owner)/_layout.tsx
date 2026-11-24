@@ -8,6 +8,7 @@ import { colors, family } from '@/theme';
 
 const TABS: { name: string; title: string; icon: IconName }[] = [
   { name: 'calendar', title: 'יומן', icon: 'calendar-outline' },
+  { name: 'waitlist', title: 'המתנה', icon: 'hourglass-outline' },
   { name: 'customers', title: 'לקוחות', icon: 'people-outline' },
   { name: 'services', title: 'שירותים', icon: 'cut-outline' },
   { name: 'settings', title: 'הגדרות', icon: 'settings-outline' },

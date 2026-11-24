@@ -3,14 +3,22 @@ import { router } from 'expo-router';
 import { MyAppointmentCard } from '@/components/my-appointment-card';
 import { Appear, Button, EmptyState, ErrorBox, Screen, Skeleton, Txt } from '@/components/ui';
 import { useMyAppointments } from '@/hooks/use-my-appointments';
+import { useMyWaitlist } from '@/hooks/use-my-waitlist';
+import { WaitlistRow } from '@/components/waitlist-row';
 
 const BUSINESS_SLUG = process.env.EXPO_PUBLIC_BUSINESS_SLUG || 'hila-brows';
 
 export default function MyAppointments() {
   const { upcoming, past, loading, refreshing, refresh, error } = useMyAppointments();
+  const waitlist = useMyWaitlist();
 
   return (
-    <Screen refreshing={refreshing} onRefresh={refresh}>
+    <Screen
+      refreshing={refreshing}
+      onRefresh={() => {
+        refresh();
+        waitlist.reload();
+      }}>
       <ErrorBox message={error} />
       {loading ? (
         <>
@@ -19,7 +27,7 @@ export default function MyAppointments() {
         </>
       ) : error ? (
         <Button title="נסו שוב" variant="secondary" onPress={refresh} />
-      ) : upcoming.length === 0 && past.length === 0 ? (
+      ) : upcoming.length === 0 && past.length === 0 && waitlist.entries.length === 0 ? (
         <EmptyState
           icon="calendar-clear-outline"
           title="עוד אין תורים"
@@ -42,6 +50,16 @@ export default function MyAppointments() {
           {upcoming.map((a, i) => (
             <Appear key={a.id} index={i}>
               <MyAppointmentCard appt={a} />
+            </Appear>
+          ))}
+          {waitlist.entries.length > 0 ? (
+            <Txt label variant="tiny">
+              רשימת המתנה
+            </Txt>
+          ) : null}
+          {waitlist.entries.map((w, i) => (
+            <Appear key={w.id} index={upcoming.length + i}>
+              <WaitlistRow entry={w} slug={BUSINESS_SLUG} onChanged={waitlist.reload} />
             </Appear>
           ))}
           {past.length > 0 ? (

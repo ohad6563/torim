@@ -24,10 +24,12 @@ import { DateStrip } from '@/components/date-strip';
 import { RemindersCard } from '@/components/reminders-card';
 import { withAccount } from '@/components/owner-gate';
 import { SlotGrid } from '@/components/slot-grid';
+import { WaitlistCard } from '@/components/waitlist-card';
 import { Appear, Button, EmptyState, ErrorBox, Field, IconButton, Loading, PressableScale, Row, Screen, Txt } from '@/components/ui';
 import { useAuth } from '@/context/auth';
 import { usePublicBusiness } from '@/hooks/use-public-business';
 import { useSlots } from '@/hooks/use-slots';
+import { useMyWaitlist } from '@/hooks/use-my-waitlist';
 import {
   addDays,
   dayOf,
@@ -57,12 +59,13 @@ const STEP_TITLES: Record<Step, string> = {
 /** Customer booking flow: service → date & time → details → confirmation. No account needed. */
 function BookFlow() {
   const { profile } = useAuth();
-  const params = useLocalSearchParams<{ slug: string; service?: string }>();
+  const params = useLocalSearchParams<{ slug: string; service?: string; day?: string }>();
   const { data, loading, error: loadError, retry } = usePublicBusiness(params.slug);
 
   const [step, setStep] = useState<Step>(params.service ? 'time' : 'service');
   const [serviceId, setServiceId] = useState<string | null>(params.service ?? null);
-  const [pickedDay, setPickedDay] = useState('');
+  // A waitlist notification links here with the freed day.
+  const [pickedDay, setPickedDay] = useState(/^\d{4}-\d{2}-\d{2}$/.test(params.day ?? '') ? params.day! : '');
   const [slideFrom, setSlideFrom] = useState<'left' | 'right'>('left');
   const [slot, setSlot] = useState<string | null>(null);
   // Name pre-filled from the profile (editable); the phone comes from the profile.
@@ -91,6 +94,8 @@ function BookFlow() {
   const day = pickedDay || (days.find((d) => !closedDays.has(d)) ?? days[0] ?? '');
 
   const { slots, loading: slotsLoading, error: slotsError } = useSlots(business?.id, serviceId, day, refreshKey);
+  const waitlist = useMyWaitlist();
+  const waitEntry = waitlist.entries.find((w) => w.day === day && w.service_id === serviceId);
 
   if (loading) return <Loading />;
   if (loadError && !data) {
@@ -246,9 +251,20 @@ function BookFlow() {
                   tz={tz}
                   selected={slot}
                   onSelect={setSlot}
-                  emptyText="אין שעות פנויות ביום הזה. נסו יום אחר."
+                  emptyText="אין שעות פנויות ביום הזה."
                 />
               </Animated.View>
+              {!slotsLoading && !slotsError && slots && !closedDays.has(day) ? (
+                <WaitlistCard
+                  key={`${day}-${serviceId}`}
+                  businessId={business.id}
+                  serviceId={service.id}
+                  day={day}
+                  full={slots.length === 0}
+                  entry={waitEntry}
+                  onChanged={waitlist.reload}
+                />
+              ) : null}
               <ErrorBox message={error} />
             </>
           ) : null}

@@ -11,6 +11,7 @@ import { addDays, formatDayLong, formatPrice, monthName, todayIn, weekdayOf } fr
 import { showMessage } from '@/lib/dialogs';
 import { bookingUrl, shareLink } from '@/lib/links';
 import { supabase } from '@/lib/supabase';
+import { fetchStudioWaitlist } from '@/lib/waitlist';
 import type { Appointment } from '@/lib/types';
 import { colors, radius, spacing } from '@/theme';
 
@@ -25,7 +26,7 @@ export default function Calendar() {
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
 
   const { data, loading, refreshing, error, refresh } = useFocusData(async () => {
-    const [dayRes, marksRes] = await Promise.all([
+    const [dayRes, marksRes, waiting] = await Promise.all([
       supabase
         .from('appointments_view')
         .select('*')
@@ -39,11 +40,13 @@ export default function Calendar() {
         .eq('status', 'booked')
         .gte('local_date', days[0])
         .lte('local_date', days[days.length - 1]),
+      fetchStudioWaitlist().catch(() => []),
     ]);
     if (dayRes.error) throw dayRes.error;
     return {
       appointments: (dayRes.data ?? []) as Appointment[],
       marked: new Set((marksRes.data ?? []).map((r: { local_date: string }) => r.local_date)),
+      waitingToday: waiting.filter((w) => w.day === day).length,
     };
   }, [business.id, day, days]);
 
@@ -109,6 +112,20 @@ export default function Calendar() {
           </Row>
         ) : null}
 
+        {data?.waitingToday ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/waitlist')}
+            style={({ pressed }) => [styles.waitBanner, pressed && { opacity: 0.8 }]}>
+            <Txt bold style={{ flex: 1 }}>
+              {data.waitingToday === 1 ? 'לקוחה אחת מחכה' : `${data.waitingToday} לקוחות מחכות`} לתור ביום הזה
+            </Txt>
+            <Txt variant="small" muted>
+              לרשימה ←
+            </Txt>
+          </Pressable>
+        ) : null}
+
         <ErrorBox message={error} />
 
         {loading ? (
@@ -136,6 +153,16 @@ export default function Calendar() {
 }
 
 const styles = StyleSheet.create({
+  waitBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surface,
+  },
   shareBanner: {
     flexDirection: 'row',
     alignItems: 'center',
