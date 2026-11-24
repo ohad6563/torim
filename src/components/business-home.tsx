@@ -19,6 +19,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { MyAppointmentCard } from '@/components/my-appointment-card';
 import { Appear, Button, Card, EmptyState, IconButton, Loading, PressableScale, Row, Txt } from '@/components/ui';
 import { ServiceQuiz } from '@/components/service-quiz';
+import { BrowMark } from '@/components/brow-mark';
 import { BrowScene } from '@/components/brow-scene';
 import { useAuth } from '@/context/auth';
 import { useMyAppointments } from '@/hooks/use-my-appointments';
@@ -95,8 +96,7 @@ export function BusinessHome({ slug }: { slug: string }) {
           {business.address?.split(',').pop()?.trim() || 'סטודיו'}
         </Txt>
       </Animated.View>
-      {/* The live brow in the background is the mark here; leave room for it. */}
-      <View style={{ height: wide ? 200 : 150 }} />
+      <BrowMark width={wide ? 170 : 120} color="#FFFFFF" style={{ marginVertical: spacing.lg }} />
       <Animated.View entering={FadeInDown.delay(500).duration(800)}>
         <Txt variant="display" center color="#FFFFFF" style={wide && { fontSize: 64, lineHeight: 70 }}>
           {business.name}

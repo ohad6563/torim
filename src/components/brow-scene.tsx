@@ -57,8 +57,8 @@ export function BrowScene({
     transform: [
       { perspective: 900 },
       { translateY: parallax.value },
-      { rotateY: `${tx.value * 22}deg` },
-      { rotateX: `${-ty.value * 14}deg` },
+      { rotateY: `${tx.value * 12}deg` },
+      { rotateX: `${-ty.value * 7}deg` },
     ],
   }));
   const layer = (depth: number) => () => {
@@ -66,11 +66,11 @@ export function BrowScene({
     return { transform: [{ translateX: tx.value * depth }, { translateY: ty.value * depth * 0.7 }] };
   };
   const lightStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: tx.value * -140 }, { translateY: ty.value * -90 + parallax.value * 0.4 }],
+    transform: [{ translateX: tx.value * -70 }, { translateY: ty.value * -40 + parallax.value * 0.4 }],
   }));
-  const guidesStyle = useAnimatedStyle(layer(-24));
-  const browStyle = useAnimatedStyle(layer(36));
-  const nearStyle = useAnimatedStyle(layer(95));
+  const guidesStyle = useAnimatedStyle(layer(-14));
+  const browStyle = useAnimatedStyle(layer(22));
+  const nearStyle = useAnimatedStyle(layer(50));
 
   return (
     <View style={[StyleSheet.absoluteFill, styles.clip, style]} pointerEvents="none">
@@ -91,7 +91,7 @@ export function BrowScene({
       </Animated.View>
 
       <Animated.View style={[StyleSheet.absoluteFill, stage]}>
-        <View style={styles.browBox}>
+        <View style={[styles.browBox, { opacity: 0.55 }]}>
           <Animated.View style={[StyleSheet.absoluteFill, guidesStyle]}>
             <Guides drawn={drawn} />
           </Animated.View>
@@ -267,5 +267,5 @@ const styles = StyleSheet.create({
   clip: { overflow: 'hidden', backgroundColor: '#0B0807' },
   light: { position: 'absolute', width: '160%', aspectRatio: 1, left: '-30%', top: '-45%' },
   // The brow sits in the upper part, wide, behind the title.
-  browBox: { position: 'absolute', left: '-8%', right: '-8%', top: '7%', aspectRatio: VB.w / VB.h },
+  browBox: { position: 'absolute', left: '-12%', right: '-12%', top: '3%', aspectRatio: VB.w / VB.h },
 });
