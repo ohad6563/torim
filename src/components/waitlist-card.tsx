@@ -106,9 +106,10 @@ export function WaitlistCard({
               <Ionicons name="hourglass-outline" size={18} color={colors.text} />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
-              <Txt bold>היום הזה מלא</Txt>
+              {/* Full, or closed for time off: either way a time may open up later. */}
+              <Txt bold>אין תורים פנויים ביום הזה</Txt>
               <Txt variant="small" muted>
-                אפשר להיכנס לרשימת המתנה. אם יתפנה תור, נעדכן אותך מיד.
+                אפשר להיכנס לרשימת המתנה. אם יתפנה תור או שהסטודיו ייפתח ביום הזה, נעדכן אותך מיד.
               </Txt>
             </View>
           </Row>
