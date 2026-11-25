@@ -55,7 +55,7 @@ function CompleteProfile() {
   return (
     <Screen edges={['top', 'bottom']} footer={<Button title="בואו נתחיל" onPress={save} loading={busy} />}>
       <AuthHero subtitle="עוד רגע מתחילים — רק כמה פרטים" compact />
-      <Appear delay={400} style={{ gap: spacing.lg }}>
+      <Appear style={{ gap: spacing.lg }}>
         <Field label="שם מלא" value={name} onChangeText={setName} autoComplete="name" textContentType="name" />
         <Field
           label="טלפון נייד"

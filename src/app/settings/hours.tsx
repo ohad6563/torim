@@ -71,15 +71,13 @@ function Hours() {
         const open = ranges.length > 0;
         return (
           <Card key={day} style={{ gap: spacing.md }}>
-            <Row>
-              <Txt bold style={{ flex: 1 }}>
-                יום {WEEKDAYS[day]}
-              </Txt>
-              <Txt variant="small" muted>
-                {open ? 'פתוח' : 'סגור'}
-              </Txt>
-              <Toggle label={`יום ${WEEKDAYS[day]} פתוח`} value={open} onValueChange={(v) => update(day, () => (v ? [{ start: '09:00', end: '18:00' }] : []))} />
-            </Row>
+            <Toggle
+              text={`יום ${WEEKDAYS[day]}`}
+              hint={open ? 'פתוח' : 'סגור'}
+              label={`יום ${WEEKDAYS[day]} פתוח`}
+              value={open}
+              onValueChange={(v) => update(day, () => (v ? [{ start: '09:00', end: '18:00' }] : []))}
+            />
             {ranges.map((r, i) => (
               <Row key={i}>
                 <TimeInput label={`יום ${WEEKDAYS[day]}, שעת פתיחה`} value={r.start} onChange={(t) => update(day, (rs) => rs.map((x, j) => (j === i ? { ...x, start: t } : x)))} />

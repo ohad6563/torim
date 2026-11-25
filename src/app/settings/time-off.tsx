@@ -108,12 +108,7 @@ function TimeOffScreen() {
               if (toDay < d) setToDay(d);
             }}
           />
-          <Row>
-            <Txt bold style={{ flex: 1 }}>
-              ימים שלמים
-            </Txt>
-            <Toggle label={'ימים שלמים'} value={fullDay} onValueChange={setFullDay} />
-          </Row>
+          <Toggle text="ימים שלמים" value={fullDay} onValueChange={setFullDay} />
           {fullDay ? (
             <>
               <Txt bold>עד {formatDayLong(toDay)} (כולל)</Txt>

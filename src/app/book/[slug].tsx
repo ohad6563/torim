@@ -9,8 +9,6 @@ import Animated, {
   FadeInLeft,
   FadeInRight,
   FadeOut,
-  SlideInLeft,
-  SlideInRight,
   ZoomIn,
   useAnimatedStyle,
   useSharedValue,
@@ -200,6 +198,7 @@ function BookFlow() {
         <Animated.View
           key={effectiveStep}
           entering={(forward ? FadeInLeft : FadeInRight).duration(motion.base).easing(Easing.bezier(...motion.curve))}
+          exiting={FadeOut.duration(motion.fast)}
           style={{ gap: spacing.lg }}>
           <Txt variant="h1">{STEP_TITLES[effectiveStep]}</Txt>
 
@@ -258,7 +257,7 @@ function BookFlow() {
               />
               <Animated.View
                 key={`${day}-${refreshKey}`}
-                entering={(slideFrom === 'left' ? SlideInLeft : SlideInRight).springify().damping(18).stiffness(170)}
+                entering={(slideFrom === 'left' ? FadeInLeft : FadeInRight).duration(motion.base).easing(Easing.bezier(...motion.curve))}
                 exiting={FadeOut.duration(motion.fast)}>
                 <SlotGrid
                   error={slotsError}
@@ -382,11 +381,11 @@ function Success({
     <SafeAreaView style={[styles.screen, styles.success]} edges={['top', 'bottom']}>
       <View style={styles.successBadgeWrap}>
         <Animated.View style={[styles.successRing, ringStyle]} />
-        <Animated.View entering={ZoomIn.duration(320).easing(Easing.bezier(...motion.curve))} style={styles.successBadge}>
+        <Animated.View entering={ZoomIn.duration(motion.base).easing(Easing.bezier(...motion.curve))} style={styles.successBadge}>
           <Ionicons name="checkmark" size={44} color={colors.textOnPrimary} />
         </Animated.View>
       </View>
-      <Animated.View entering={FadeInDown.delay(120).duration(320)} style={{ gap: spacing.sm, alignItems: 'center' }}>
+      <Animated.View entering={FadeInDown.delay(120).duration(motion.base).easing(Easing.bezier(...motion.curve))} style={{ gap: spacing.sm, alignItems: 'center' }}>
         <Txt variant="display" center>
           נתראה!
         </Txt>

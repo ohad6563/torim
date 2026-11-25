@@ -62,7 +62,7 @@ export function SocialButtons({
   onGoogle: () => void;
   onApple: () => void;
   busy: 'google' | 'apple' | null;
-  /** On a dark background (the video): white Apple button. */
+  /** On a dark background (the hero scene): white Apple button. */
   onDark?: boolean;
 }) {
   const [apple, setApple] = useState(false);

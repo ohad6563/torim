@@ -121,15 +121,7 @@ function EditService() {
         </Row>
       </View>
 
-      <Row>
-        <View style={{ flex: 1 }}>
-          <Txt bold>מוצג ללקוחות</Txt>
-          <Txt variant="small" muted>
-            כשכבוי, אי אפשר לקבוע את השירות אונליין.
-          </Txt>
-        </View>
-        <Toggle label={'מוצג ללקוחות'} value={active} onValueChange={setActive} />
-      </Row>
+      <Toggle text="מוצג ללקוחות" hint="כשכבוי, אי אפשר לקבוע את השירות אונליין." value={active} onValueChange={setActive} />
 
       <ErrorBox message={error} />
       {!isNew ? <Button title="מחיקת השירות" variant="danger" onPress={remove} /> : null}

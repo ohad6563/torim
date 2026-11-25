@@ -65,12 +65,12 @@ export function ServiceQuiz({ services, onBook }: { services: Service[]; onBook:
         <Txt variant="h3">{step === 2 ? 'ההמלצה שלנו' : 'מה מתאים לי?'}</Txt>
         <Row gap={6}>
           {[0, 1, 2].map((i) => (
-            <Animated.View key={i} layout={LinearTransition.springify()} style={[styles.dot, i === step && styles.dotOn]} />
+            <Animated.View key={i} layout={LinearTransition.duration(motion.base)} style={[styles.dot, i === step && styles.dotOn]} />
           ))}
         </Row>
       </Row>
 
-      <Animated.View key={step} entering={FadeInDown.duration(motion.base).easing(Easing.bezier(...motion.curve))} exiting={FadeOut.duration(motion.fast)} style={styles.body}>
+      <Animated.View key={step} layout={LinearTransition.duration(motion.base)} entering={FadeInDown.duration(motion.base).easing(Easing.bezier(...motion.curve))} exiting={FadeOut.duration(motion.fast)} style={styles.body}>
         {step === 0 ? (
           <>
             <Txt muted>מה הכי חשוב לך?</Txt>

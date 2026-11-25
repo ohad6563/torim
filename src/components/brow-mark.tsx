@@ -88,7 +88,7 @@ function Stroke({
 /**
  * Signature animation of the studio's mark: the brow arch is sketched like a
  * pencil outline and then filled in, the legs of the ה are drawn, and the fine
- * hairs appear last. Afterwards it breathes slowly. Respects Reduce Motion.
+ * hairs appear last. Respects Reduce Motion.
  */
 export function BrowMark({
   width = 160,

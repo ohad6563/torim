@@ -15,7 +15,7 @@ export function MyAppointmentCard({ appt, dim }: { appt: MyAppointment; dim?: bo
     <Card
       onPress={() => router.push({ pathname: '/a/[token]', params: { token: appt.cancel_token } })}
       accessibilityLabel={`${appt.service_name}, ${formatDayLong(day)} בשעה ${timeOf(appt.starts_at, appt.timezone)}`}
-      style={dim && { opacity: 0.6 }}>
+      style={dim && { backgroundColor: colors.surfaceRaised }}>
       <Row gap={spacing.md}>
         <View style={[styles.date, dim && styles.dateDim]}>
           <Txt variant="h2" color={dim ? colors.text : colors.textOnPrimary} style={styles.dateNum}>

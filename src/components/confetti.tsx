@@ -43,7 +43,7 @@ function makePieces(width: number, height: number): Piece[] {
   const pieces: Piece[] = [];
   // Cannons: bottom-left shoots up-right, bottom-right shoots up-left.
   for (const side of [-1, 1]) {
-    for (let i = 0; i < 28; i++) {
+    for (let i = 0; i < 20; i++) {
       const tilt = (14 + r() * 34) * (Math.PI / 180); // angle away from straight up, towards the centre
       const speed = height * (1.05 + r() * 0.75);
       pieces.push({

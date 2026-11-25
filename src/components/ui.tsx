@@ -257,7 +257,7 @@ export function Txt({
 type ButtonProps = {
   title: string;
   onPress?: () => void;
-  /** 'inverse': white button for use on top of photos / video. */
+  /** 'inverse': white button for use on top of the dark hero. */
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'inverse';
   icon?: IconName;
   loading?: boolean;
@@ -452,12 +452,51 @@ export function Toggle({
   value,
   onValueChange,
   label,
+  text,
+  hint,
 }: {
   value: boolean;
   onValueChange: (v: boolean) => void;
   label?: string;
+  /** Visible label; with it the whole row (label + switch) is one tap target. */
+  text?: string;
+  /** Small muted line under `text`. */
+  hint?: string;
 }) {
   // The whole 44pt area (and the label next to it, via `text`) toggles, not just the small track.
+  const sw = (
+    <View style={Platform.OS === 'web' ? styles.ltr : undefined} pointerEvents="none">
+      <Switch
+        value={value}
+        trackColor={{ true: colors.primary, false: colors.borderStrong }}
+        thumbColor={value ? colors.background : colors.textMuted}
+        ios_backgroundColor={colors.borderStrong}
+        {...(Platform.OS === 'web' ? { activeThumbColor: colors.background } : null)}
+      />
+    </View>
+  );
+  if (text)
+    return (
+      <Pressable
+        onPress={() => {
+          haptics.select();
+          onValueChange(!value);
+        }}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: value }}
+        accessibilityLabel={label ?? text}
+        style={styles.toggleRow}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Txt bold>{text}</Txt>
+          {hint ? (
+            <Txt variant="small" muted>
+              {hint}
+            </Txt>
+          ) : null}
+        </View>
+        {sw}
+      </Pressable>
+    );
   return (
     <Pressable
       onPress={() => {
@@ -657,6 +696,7 @@ const styles = StyleSheet.create({
   },
   disabled: { opacity: 0.35 },
   toggle: { minHeight: 44, minWidth: 52, justifyContent: 'center' },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 44 },
   text: { color: colors.text, writingDirection: 'rtl' },
   label: { letterSpacing: 1.6, color: colors.textMuted, fontFamily: family.medium },
   button: {

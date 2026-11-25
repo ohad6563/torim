@@ -201,5 +201,5 @@ const styles = StyleSheet.create({
   clip: { overflow: 'hidden', backgroundColor: '#0B0807' },
   light: { position: 'absolute', width: '160%', aspectRatio: 1, left: '-30%', top: '-45%' },
   // The brow sits in the upper part, wide, behind the title.
-  browBox: { position: 'absolute', left: '-12%', right: '-12%', top: '3%', aspectRatio: VB.w / VB.h },
+  browBox: { position: 'absolute', left: '-4%', right: '-20%', top: '3%', aspectRatio: VB.w / VB.h },
 });

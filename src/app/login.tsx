@@ -1,6 +1,6 @@
 import { Redirect, router, useLocalSearchParams, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Animated, { Easing, FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -20,6 +20,12 @@ import { MAX_WIDTH, motion, spacing } from '@/theme';
  * First screen for anyone not signed in: one tap with Google (or Apple on iPhone).
  * Sign-in and sign-up are the same; new customers add their name and phone right after.
  */
+const LINKS: { label: string; href: Href }[] = [
+  { label: 'תנאי השימוש', href: '/terms' },
+  { label: 'מדיניות הפרטיות', href: '/privacy' },
+  { label: 'נגישות', href: '/accessibility' },
+];
+
 export default function Login() {
   const { session } = useAuth();
   // Where to go after signing in (e.g. a booking link opened while signed out).
@@ -48,7 +54,7 @@ export default function Login() {
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
-      {/* Looping studio video behind everything, darkened so the text stays readable. */}
+      {/* Live brow scene behind everything, darkened so the text stays readable. */}
       <BrowScene />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -65,19 +71,15 @@ export default function Login() {
         </ScrollView>
         <Animated.View entering={FadeInDown.delay(360).duration(motion.slow).easing(Easing.bezier(...motion.curve))} style={styles.footer}>
           <SocialButtons busy={busy} onGoogle={() => run('google')} onApple={() => run('apple')} onDark />
-          <Txt variant="tiny" center color="rgba(255,255,255,0.6)" style={{ paddingTop: spacing.xs }}>
-            <Txt variant="tiny" color="rgba(255,255,255,0.85)" style={styles.link} onPress={() => router.push('/terms')}>
-              תנאי השימוש
-            </Txt>
-            {'  ·  '}
-            <Txt variant="tiny" color="rgba(255,255,255,0.85)" style={styles.link} onPress={() => router.push('/privacy')}>
-              מדיניות הפרטיות
-            </Txt>
-            {'  ·  '}
-            <Txt variant="tiny" color="rgba(255,255,255,0.85)" style={styles.link} onPress={() => router.push('/accessibility')}>
-              נגישות
-            </Txt>
-          </Txt>
+          <View style={styles.links}>
+            {LINKS.map((l) => (
+              <Pressable key={l.label} onPress={() => router.push(l.href)} accessibilityRole="link" style={styles.linkHit}>
+                <Txt variant="tiny" color="rgba(255,255,255,0.85)" style={styles.link}>
+                  {l.label}
+                </Txt>
+              </Pressable>
+            ))}
+          </View>
         </Animated.View>
       </SafeAreaView>
     </View>
@@ -86,6 +88,8 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   link: { textDecorationLine: 'underline' },
+  links: { flexDirection: 'row', justifyContent: 'center', columnGap: spacing.md },
+  linkHit: { minHeight: 44, justifyContent: 'center' },
   root: { flex: 1, backgroundColor: '#0b0807' },
   safe: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, justifyContent: 'center' },

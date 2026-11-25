@@ -18,7 +18,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { MyAppointmentCard } from '@/components/my-appointment-card';
-import { Appear, Button, Card, EmptyState, IconButton, Loading, PressableScale, Row, Txt } from '@/components/ui';
+import { Appear, Button, Card, EmptyState, IconButton, PressableScale, Row, Txt } from '@/components/ui';
 import { ServiceQuiz } from '@/components/service-quiz';
 import { BrowMark } from '@/components/brow-mark';
 import { BrowScene } from '@/components/brow-scene';
@@ -42,7 +42,7 @@ export function BusinessHome({ slug }: { slug: string }) {
   const wide = width >= 900;
   const insets = useSafeAreaInsets();
 
-  // Scroll position drives the parallax video and the hero fading out.
+  // Scroll position drives the parallax brow scene and the hero fading out.
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.set(e.contentOffset.y);
@@ -70,7 +70,13 @@ export function BusinessHome({ slug }: { slug: string }) {
   }, [data, nextDays]);
   const next = useAvailability(data?.business.id, nextService?.id, nextDays, nextClosed);
 
-  if (loading) return <Loading />;
+  // While loading, show the dark hero background (no flash of a blank light screen).
+  if (loading)
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0B0807' }}>
+        <BrowScene overlay="hero" />
+      </View>
+    );
   if (error && !data) {
     return (
       <SafeAreaView style={styles.screen}>
@@ -152,7 +158,7 @@ export function BusinessHome({ slug }: { slug: string }) {
   const content = (
     <View style={styles.content}>
       {upcoming.length > 0 ? (
-        <Appear delay={300}>
+        <Appear>
           <Txt label variant="tiny" style={styles.sectionLabel}>
             התור הבא שלך
           </Txt>
@@ -224,11 +230,11 @@ export function BusinessHome({ slug }: { slug: string }) {
         </View>
       </View>
 
-      <Appear delay={350}>
+      <Appear index={2}>
         <ServiceQuiz services={services} onBook={book} />
       </Appear>
 
-      <Appear delay={400}>
+      <Appear index={3}>
         <Txt label variant="tiny" style={styles.sectionLabel}>
           שעות פעילות
         </Txt>
@@ -259,7 +265,7 @@ export function BusinessHome({ slug }: { slug: string }) {
       </Appear>
 
       {business.address || business.phone ? (
-        <Appear delay={500}>
+        <Appear index={4}>
           <Txt label variant="tiny" style={styles.sectionLabel}>
             איך מגיעים
           </Txt>
@@ -281,22 +287,22 @@ export function BusinessHome({ slug }: { slug: string }) {
       ) : null}
 
       <View style={styles.footer}>
-        <Pressable onPress={() => router.push('/terms')} accessibilityRole="link" hitSlop={8}>
+        <Pressable onPress={() => router.push('/terms')} accessibilityRole="link" hitSlop={4} style={styles.footerLink}>
           <Txt variant="tiny" faint>
             תנאי שימוש
           </Txt>
         </Pressable>
-        <Pressable onPress={() => router.push('/privacy')} accessibilityRole="link" hitSlop={8}>
+        <Pressable onPress={() => router.push('/privacy')} accessibilityRole="link" hitSlop={4} style={styles.footerLink}>
           <Txt variant="tiny" faint>
             מדיניות פרטיות
           </Txt>
         </Pressable>
-        <Pressable onPress={() => router.push('/accessibility')} accessibilityRole="link" hitSlop={8}>
+        <Pressable onPress={() => router.push('/accessibility')} accessibilityRole="link" hitSlop={4} style={styles.footerLink}>
           <Txt variant="tiny" faint>
             נגישות
           </Txt>
         </Pressable>
-        <Pressable onPress={() => router.push('/support')} accessibilityRole="link" hitSlop={8}>
+        <Pressable onPress={() => router.push('/support')} accessibilityRole="link" hitSlop={4} style={styles.footerLink}>
           <Txt variant="tiny" faint>
             תמיכה
           </Txt>
@@ -307,7 +313,7 @@ export function BusinessHome({ slug }: { slug: string }) {
 
   return (
     <View style={styles.screen}>
-      {/* Light status bar over the dark video; dark once the page is scrolled past it. */}
+      {/* Light status bar over the dark hero; dark once the page is scrolled past it. */}
       <StatusBar style={pastHero ? (colors.isDark ? 'light' : 'dark') : 'light'} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false}>
         {hero}
@@ -325,7 +331,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   heroBox: { justifyContent: 'flex-end', paddingHorizontal: spacing.lg, paddingBottom: spacing.xxxl + spacing.lg, overflow: 'hidden' },
   hero: { alignItems: 'center', gap: spacing.sm, width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center' },
-  // Content slides up over the bottom of the video like a sheet.
+  // Content slides up over the bottom of the hero like a sheet.
   sheet: {
     marginTop: -spacing.xl,
     backgroundColor: colors.background,
@@ -366,6 +372,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
+  footerLink: { minHeight: 44, justifyContent: 'center' },
   nextSlot: {
     flexDirection: 'row',
     alignItems: 'center',
