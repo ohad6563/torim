@@ -1,27 +1,20 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router, useLocalSearchParams, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeInDown } from 'react-native-reanimated';
 
 import { AuthHero } from '@/components/auth-hero';
 import { SocialButtons } from '@/components/social-buttons';
 import { BrowScene } from '@/components/brow-scene';
-import { ErrorBox, Row, Txt, type IconName } from '@/components/ui';
+import { ErrorBox, Txt } from '@/components/ui';
 import { useAuth } from '@/context/auth';
 import { errorMessage } from '@/lib/errors';
 import { haptics } from '@/lib/haptics';
 import { safeNext } from '@/lib/nav';
 import { signInWithApple, signInWithGoogle } from '@/lib/social-auth';
-import { MAX_WIDTH, radius, spacing } from '@/theme';
-
-const PERKS: { icon: IconName; text: string }[] = [
-  { icon: 'time-outline', text: 'קביעת תור בכמה שניות, 24/7' },
-  { icon: 'calendar-outline', text: 'כל התורים שלך במקום אחד' },
-  { icon: 'lock-closed-outline', text: 'בלי סיסמאות – כניסה בלחיצה' },
-];
+import { MAX_WIDTH, motion, spacing } from '@/theme';
 
 /**
  * First screen for anyone not signed in: one tap with Google (or Apple on iPhone).
@@ -61,24 +54,16 @@ export default function Login() {
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.column}>
             <AuthHero subtitle="ברוכים הבאים לסטודיו" onDark />
-            <View style={styles.perks}>
-              {PERKS.map((p, i) => (
-                <Animated.View key={p.text} entering={FadeInDown.delay(900 + i * 120).duration(600)}>
-                  <Row gap={spacing.md}>
-                    <View style={styles.perkIcon}>
-                      <Ionicons name={p.icon} size={18} color="#FFFFFF" />
-                    </View>
-                    <Txt color="#FFFFFF" style={{ flex: 1 }}>
-                      {p.text}
-                    </Txt>
-                  </Row>
-                </Animated.View>
-              ))}
-            </View>
+            {/* One quiet line instead of a list of icon "perks" (a template look). */}
+            <Animated.View entering={FadeIn.delay(280).duration(motion.slow)}>
+              <Txt variant="small" center color="rgba(255,255,255,0.62)" style={styles.tagline}>
+                קביעת תור בכמה שניות · תזכורת לפני כל תור
+              </Txt>
+            </Animated.View>
             <ErrorBox message={error} />
           </View>
         </ScrollView>
-        <Animated.View entering={FadeInDown.delay(1300).duration(700)} style={styles.footer}>
+        <Animated.View entering={FadeInDown.delay(360).duration(motion.slow).easing(Easing.bezier(...motion.curve))} style={styles.footer}>
           <SocialButtons busy={busy} onGoogle={() => run('google')} onApple={() => run('apple')} onDark />
           <Txt variant="tiny" center color="rgba(255,255,255,0.6)" style={{ paddingTop: spacing.xs }}>
             <Txt variant="tiny" color="rgba(255,255,255,0.85)" style={styles.link} onPress={() => router.push('/terms')}>
@@ -105,17 +90,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, justifyContent: 'center' },
   column: { width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center', gap: spacing.lg },
-  perks: { gap: spacing.md, paddingHorizontal: spacing.sm, marginTop: spacing.sm },
-  perkIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  tagline: { letterSpacing: 0.3 },
   footer: {
     width: '100%',
     maxWidth: MAX_WIDTH,
