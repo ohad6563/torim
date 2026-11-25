@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { Button, Chip, ErrorBox, Field, Row, Screen, Txt } from '@/components/ui';
 import { useAuth, useBusiness } from '@/context/auth';
 import { CATEGORIES } from '@/lib/business-defaults';
-import { isValidPhone, normalizePhone } from '@/lib/dates';
+import { formatPhone, isValidPhone, normalizePhone } from '@/lib/dates';
 import { errorMessage } from '@/lib/errors';
 import { bookingUrl } from '@/lib/links';
 import { supabase } from '@/lib/supabase';
@@ -18,7 +18,7 @@ function Profile() {
   const { refreshBusiness } = useAuth();
   const [name, setName] = useState(business.name);
   const [category, setCategory] = useState(business.category ?? 'אחר');
-  const [phone, setPhone] = useState(business.phone ?? '');
+  const [phone, setPhone] = useState(formatPhone(business.phone));
   const [address, setAddress] = useState(business.address ?? '');
   const [description, setDescription] = useState(business.description ?? '');
   const [busy, setBusy] = useState(false);

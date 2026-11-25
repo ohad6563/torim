@@ -5,12 +5,12 @@ import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withSprin
 
 import { dayNumber, formatDayLong, monthName, WEEKDAYS_SHORT, weekdayOf } from '@/lib/dates';
 import { haptics } from '@/lib/haptics';
-import { colors, family, font, radius, spacing, springs } from '@/theme';
+import { colors, family, font, motion, radius, spacing, springs } from '@/theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Row of days to pick from. `marked` days get a small dot.
+ * Row of days to pick from. `marked` days get a small dot; `fullDays` say "מלא" (still tappable, for the waitlist).
  * With `fill`, the days share the full width (for a single week); otherwise the row scrolls.
  */
 export function DateStrip({
@@ -19,6 +19,7 @@ export function DateStrip({
   onSelect,
   disabledDays,
   marked,
+  fullDays,
   fill,
 }: {
   days: string[];
@@ -26,6 +27,7 @@ export function DateStrip({
   onSelect: (day: string) => void;
   disabledDays?: Set<string>;
   marked?: Set<string>;
+  fullDays?: Set<string>;
   fill?: boolean;
 }) {
   // A single highlight "pill" slides with a spring to the selected day. Its position comes
@@ -38,9 +40,18 @@ export function DateStrip({
   const pillX = useSharedValue(target);
   const ready = rowW > 0 && cellW > 0;
 
+  // Place the pill without animation on the first real layout (cell width unknown before
+  // that), then spring between days.
+  const placed = useSharedValue(0);
   useEffect(() => {
-    pillX.set(withSpring(target, PILL_SPRING));
-  }, [target, pillX]);
+    if (!ready) return;
+    if (placed.get() === 0) {
+      pillX.set(target);
+      placed.set(1);
+      return;
+    }
+    pillX.set(withSpring(target, springs.gentle));
+  }, [target, pillX, ready, placed]);
 
   const pillStyle = useAnimatedStyle(() => ({ transform: [{ translateX: pillX.value }] }));
   const pill = ready ? (
@@ -55,6 +66,7 @@ export function DateStrip({
       selected={day === selected}
       disabled={!!disabledDays?.has(day)}
       marked={!!marked?.has(day)}
+      full={!!fullDays?.has(day)}
       // Show the month name on the first day of a month (and at the start of a scrolling strip).
       month={!fill && (i === 0 || day.endsWith('-01')) ? monthName(day) : null}
       onPress={() => onSelect(day)}
@@ -76,7 +88,6 @@ export function DateStrip({
   );
 }
 
-const PILL_SPRING = { damping: 17, stiffness: 210, mass: 0.8 };
 const CELL_W = 54;
 const GAP = spacing.sm;
 /** Next day is further to the left in RTL. The app always runs RTL (forced natively, dir="rtl" on web). */
@@ -122,6 +133,7 @@ function Day({
   selected,
   disabled,
   marked,
+  full,
   fill,
   month,
   onPress,
@@ -130,6 +142,7 @@ function Day({
   selected: boolean;
   disabled: boolean;
   marked: boolean;
+  full?: boolean;
   fill?: boolean;
   month: string | null;
   onPress: () => void;
@@ -146,7 +159,7 @@ function Day({
   const on = useSharedValue(selected ? 1 : 0);
   const scale = useSharedValue(1);
   useEffect(() => {
-    on.set(withTiming(selected ? 1 : 0, { duration: 260 }));
+    on.set(withTiming(selected ? 1 : 0, { duration: motion.fast }));
   }, [selected, on]);
   const pressStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -180,12 +193,16 @@ function Day({
         }}
         disabled={disabled}
         accessibilityRole="button"
-        accessibilityLabel={formatDayLong(day)}
+        accessibilityLabel={full ? `${formatDayLong(day)}, מלא` : formatDayLong(day)}
         accessibilityState={{ selected, disabled }}
         style={[styles.day, fill && styles.dayFill, disabled && styles.dayDisabled, pressStyle]}>
         <Animated.Text style={[styles.weekday, weekdayColor]}>{WEEKDAYS_SHORT[weekdayOf(day)]}</Animated.Text>
         <Animated.Text style={[styles.number, numberColor]}>{dayNumber(day)}</Animated.Text>
-        <Animated.View style={[styles.dot, dotColor]} />
+        {full ? (
+          <Animated.Text style={[styles.full, weekdayColor]}>מלא</Animated.Text>
+        ) : (
+          <Animated.View style={[styles.dot, dotColor]} />
+        )}
       </AnimatedPressable>
     </View>
   );
@@ -204,8 +221,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   webRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.xs },
-  arrow: { width: 28, height: 64, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs },
-  fillWrap: { flex: 1 },
+  arrow: { width: 44, height: 64, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs },
+  fillWrap: { flex: 1, minWidth: 0 },
   month: { fontFamily: family.medium, fontSize: font.tiny, color: colors.textFaint, height: 18, textAlign: 'center' },
   day: {
     width: 54,
@@ -216,9 +233,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     gap: 2,
   },
-  dayFill: { width: undefined },
+  // 'auto', not undefined: undefined doesn't override the fixed width above when styles merge.
+  dayFill: { width: 'auto', minWidth: 0 },
   dayDisabled: { opacity: 0.25 },
   weekday: { fontFamily: family.medium, fontSize: font.tiny },
   number: { fontFamily: family.semibold, fontSize: font.h3 },
   dot: { width: 4, height: 4, borderRadius: 2 },
+  full: { fontFamily: family.medium, fontSize: 9, lineHeight: 10, height: 10, marginTop: -3 },
 });

@@ -3,12 +3,9 @@ import { View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedProps,
-  useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withDelay,
-  withRepeat,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
@@ -100,31 +97,24 @@ export function BrowMark({
 }: {
   width?: number;
   style?: StyleProp<ViewStyle>;
-  /** Override the brand colour, e.g. white on top of the video. */
+  /** Override the brand colour, e.g. white on the dark hero. */
   color?: string;
 }) {
   const reduce = useReducedMotion();
   const fill = useSharedValue(reduce ? 1 : 0);
-  const breathe = useSharedValue(1);
   useEffect(() => {
     if (reduce) return;
+    // Drawn once, then it stays still (no looping "breathing").
     fill.set(withDelay(950, withTiming(1, { duration: 550, easing: Easing.out(Easing.quad) })));
-    breathe.set(
-      withDelay(
-        2600,
-        withRepeat(withSequence(withTiming(0.6, { duration: 2400 }), withTiming(1, { duration: 2400 })), -1),
-      ),
-    );
-  }, [breathe, fill, reduce]);
+  }, [fill, reduce]);
   const fillProps = useAnimatedProps(() => ({ fillOpacity: fill.value }));
-  const glow = useAnimatedStyle(() => ({ opacity: breathe.value }));
 
   return (
     <View
       style={[{ width, aspectRatio: 470 / 430 }, style]}
       accessible={false}
       importantForAccessibility="no-hide-descendants">
-      <Animated.View style={[{ flex: 1 }, glow]}>
+      <View style={{ flex: 1 }}>
         <Svg width="100%" height="100%" viewBox="283 296 470 430">
           <Stroke c={ARCH_TOP} width={5} delay={0} duration={1000} color={color} />
           <Stroke c={ARCH_BOTTOM} width={5} delay={120} duration={1000} color={color} />
@@ -135,7 +125,7 @@ export function BrowMark({
             <Stroke key={i} c={c} width={9} opacity={0.6} delay={1500 + i * 90} duration={380} color={color} />
           ))}
         </Svg>
-      </Animated.View>
+      </View>
     </View>
   );
 }

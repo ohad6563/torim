@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
   FadeInDown,
   FadeInLeft,
+  FadeInRight,
   FadeOut,
   SlideInLeft,
   SlideInRight,
@@ -30,6 +31,7 @@ import { useAuth } from '@/context/auth';
 import { usePublicBusiness } from '@/hooks/use-public-business';
 import { useSlots } from '@/hooks/use-slots';
 import { useMyWaitlist } from '@/hooks/use-my-waitlist';
+import { useAvailability } from '@/hooks/use-availability';
 import {
   addDays,
   dayOf,
@@ -45,7 +47,8 @@ import { errorMessage } from '@/lib/errors';
 import { haptics } from '@/lib/haptics';
 import { supabase } from '@/lib/supabase';
 import type { Service } from '@/lib/types';
-import { colors, radius, spacing, springs } from '@/theme';
+import { colors, motion, radius, spacing, springs } from '@/theme';
+import { calendarUrl, prepTips } from '@/lib/booking-extras';
 
 type Step = 'service' | 'time' | 'details' | 'done';
 const STEPS: Step[] = ['service', 'time', 'details'];
@@ -63,6 +66,13 @@ function BookFlow() {
   const { data, loading, error: loadError, retry } = usePublicBusiness(params.slug);
 
   const [step, setStep] = useState<Step>(params.service ? 'time' : 'service');
+  // Forward steps enter from the left (RTL reading direction), going back enters from the right.
+  const [shownStep, setShownStep] = useState(step);
+  const [forward, setForward] = useState(true);
+  if (shownStep !== step) {
+    setForward(STEPS.indexOf(step) > STEPS.indexOf(shownStep));
+    setShownStep(step);
+  }
   const [serviceId, setServiceId] = useState<string | null>(params.service ?? null);
   // A waitlist notification links here with the freed day.
   const [pickedDay, setPickedDay] = useState(/^\d{4}-\d{2}-\d{2}$/.test(params.day ?? '') ? params.day! : '');
@@ -95,6 +105,8 @@ function BookFlow() {
 
   const { slots, loading: slotsLoading, error: slotsError } = useSlots(business?.id, serviceId, day, refreshKey);
   const waitlist = useMyWaitlist();
+  // Mark days with no free time for this treatment, so nobody taps into an empty wheel.
+  const availability = useAvailability(business?.id, serviceId, days.slice(0, 21), closedDays);
   const waitEntry = waitlist.entries.find((w) => w.day === day && w.service_id === serviceId);
 
   if (loading) return <Loading />;
@@ -185,7 +197,10 @@ function BookFlow() {
       <Progress index={stepIndex} />
 
       <Screen footer={footer} edges={['bottom']}>
-        <Animated.View key={effectiveStep} entering={FadeInLeft.duration(380).easing(Easing.out(Easing.cubic))} style={{ gap: spacing.lg }}>
+        <Animated.View
+          key={effectiveStep}
+          entering={(forward ? FadeInLeft : FadeInRight).duration(motion.base).easing(Easing.bezier(...motion.curve))}
+          style={{ gap: spacing.lg }}>
           <Txt variant="h1">{STEP_TITLES[effectiveStep]}</Txt>
 
           {effectiveStep === 'service' ? (
@@ -233,6 +248,7 @@ function BookFlow() {
                 days={days}
                 selected={day}
                 disabledDays={closedDays}
+                fullDays={availability.full}
                 onSelect={(d) => {
                   // Later days sit to the left (RTL), so their times slide in from the left.
                   setSlideFrom(d > day ? 'left' : 'right');
@@ -243,7 +259,7 @@ function BookFlow() {
               <Animated.View
                 key={`${day}-${refreshKey}`}
                 entering={(slideFrom === 'left' ? SlideInLeft : SlideInRight).springify().damping(18).stiffness(170)}
-                exiting={FadeOut.duration(110)}>
+                exiting={FadeOut.duration(motion.fast)}>
                 <SlotGrid
                   error={slotsError}
                   slots={slots}
@@ -366,27 +382,57 @@ function Success({
     <SafeAreaView style={[styles.screen, styles.success]} edges={['top', 'bottom']}>
       <View style={styles.successBadgeWrap}>
         <Animated.View style={[styles.successRing, ringStyle]} />
-        <Animated.View entering={ZoomIn.springify().damping(12)} style={styles.successBadge}>
+        <Animated.View entering={ZoomIn.duration(320).easing(Easing.bezier(...motion.curve))} style={styles.successBadge}>
           <Ionicons name="checkmark" size={44} color={colors.textOnPrimary} />
         </Animated.View>
       </View>
-      <Animated.View entering={FadeInDown.delay(350).duration(600)} style={{ gap: spacing.sm, alignItems: 'center' }}>
+      <Animated.View entering={FadeInDown.delay(120).duration(320)} style={{ gap: spacing.sm, alignItems: 'center' }}>
         <Txt variant="display" center>
           נתראה!
         </Txt>
         <Txt muted center>
-          {service.name} ב{businessName}
+          שמרתי לך {service.name} ב{businessName}
         </Txt>
         <Txt variant="h3" center>
           {formatDayLong(dayOf(slot, tz))} · {timeOf(slot, tz)}
         </Txt>
         {address ? (
-          <Txt variant="small" faint center>
+          <Txt variant="small" muted center>
             {address}
           </Txt>
         ) : null}
       </Animated.View>
-      <Animated.View entering={FadeIn.delay(800).duration(600)} style={styles.successActions}>
+      <Animated.View entering={FadeIn.delay(280).duration(motion.base)} style={styles.successActions}>
+        <Row gap={spacing.sm} style={{ justifyContent: 'center' }}>
+          {address ? (
+            <Button
+              small
+              variant="secondary"
+              icon="navigate-outline"
+              title="ניווט בוויז"
+              onPress={() => Linking.openURL(`https://waze.com/ul?q=${encodeURIComponent(address)}&navigate=yes`)}
+            />
+          ) : null}
+          <Button
+            small
+            variant="secondary"
+            icon="calendar-outline"
+            title="הוספה ליומן"
+            onPress={() => Linking.openURL(calendarUrl({ title: `${service.name} · ${businessName}`, start: slot, minutes: service.duration_min, location: address }))}
+          />
+        </Row>
+        {prepTips(service.name).length > 0 ? (
+          <View style={styles.tips}>
+            <Txt label variant="tiny">
+              לפני שמגיעים
+            </Txt>
+            {prepTips(service.name).map((t) => (
+              <Txt key={t} variant="small">
+                · {t}
+              </Txt>
+            ))}
+          </View>
+        ) : null}
         <RemindersCard compact />
         <Button title="סיום" onPress={() => router.replace('/home')} />
         <Button title="התורים שלי" variant="secondary" onPress={() => router.replace('/appointments')} />
@@ -396,8 +442,8 @@ function Success({
           </Txt>
         ) : null}
       </Animated.View>
-      {/* Last, so it's drawn above everything. */}
-      <Confetti />
+      {/* Last, so it's drawn above everything; starts once the message has landed. */}
+      <Confetti delay={350} />
     </SafeAreaView>
   );
 }
@@ -409,6 +455,7 @@ const styles = StyleSheet.create({
   segment: { flex: 1, height: 3, borderRadius: 2, backgroundColor: colors.border, overflow: 'hidden' },
   segmentFill: { flex: 1, backgroundColor: colors.text, transformOrigin: 'right' },
   list: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+  tips: { gap: spacing.xs, padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   serviceRow: {
     flexDirection: 'row',
     alignItems: 'center',

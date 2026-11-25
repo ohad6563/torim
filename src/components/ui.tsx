@@ -20,7 +20,7 @@ import {
 } from 'react-native';
 import Animated, {
   Easing,
-  FadeInDown,
+  FadeIn,
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
@@ -33,7 +33,7 @@ import Animated, {
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { haptics } from '@/lib/haptics';
-import { colors, family, font, MAX_WIDTH, radius, spacing, springs } from '@/theme';
+import { colors, family, font, MAX_WIDTH, motion, radius, spacing, springs } from '@/theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -56,7 +56,7 @@ function usePressScale(to = 0.97) {
 
 // ---------- Motion helpers ----------
 
-/** Fades and lifts its children in. Pass `index` to stagger items in a list. */
+/** Fades its children in (opacity only). Pass `index` for a short stagger in a list (capped). */
 export function Appear({
   children,
   index = 0,
@@ -70,9 +70,9 @@ export function Appear({
 }) {
   return (
     <Animated.View
-      entering={FadeInDown.duration(520)
-        .delay(delay + Math.min(index, 12) * 55)
-        .easing(Easing.out(Easing.cubic))}
+      entering={FadeIn.duration(motion.base)
+        .delay(delay + Math.min(index, 4) * 40)
+        .easing(Easing.bezier(...motion.curve))}
       style={style}>
       {children}
     </Animated.View>
@@ -381,11 +381,11 @@ export function Field({ label, error, hint, style, onFocus, onBlur, ...props }: 
           accessibilityLabel={label}
           accessibilityHint={error ?? hint}
           onFocus={(e) => {
-            focus.set(withTiming(1, { duration: 180 }));
+            focus.set(withTiming(1, { duration: motion.fast }));
             onFocus?.(e);
           }}
           onBlur={(e) => {
-            focus.set(withTiming(0, { duration: 180 }));
+            focus.set(withTiming(0, { duration: motion.fast }));
             onBlur?.(e);
           }}
           style={[styles.input, props.multiline && styles.inputMultilineText, style]}
@@ -422,7 +422,7 @@ export function Chip({
   const press = usePressScale(0.94);
   const on = useSharedValue(selected ? 1 : 0);
   useEffect(() => {
-    on.set(withTiming(selected ? 1 : 0, { duration: 200 }));
+    on.set(withTiming(selected ? 1 : 0, { duration: motion.fast }));
   }, [selected, on]);
   const fill = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(on.value, [0, 1], [colors.surface, colors.primary]),
@@ -457,8 +457,18 @@ export function Toggle({
   onValueChange: (v: boolean) => void;
   label?: string;
 }) {
+  // The whole 44pt area (and the label next to it, via `text`) toggles, not just the small track.
   return (
-    <View style={Platform.OS === 'web' ? styles.ltr : undefined}>
+    <Pressable
+      onPress={() => {
+        haptics.select();
+        onValueChange(!value);
+      }}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      accessibilityLabel={label}
+      hitSlop={6}
+      style={[styles.toggle, Platform.OS === 'web' && styles.ltr]}>
       <Switch
         accessibilityLabel={label}
         value={value}
@@ -471,7 +481,7 @@ export function Toggle({
         ios_backgroundColor={colors.borderStrong}
         {...(Platform.OS === 'web' ? { activeThumbColor: colors.background } : null)}
       />
-    </View>
+    </Pressable>
   );
 }
 
@@ -509,7 +519,7 @@ export function Skeleton({ height = 72, style }: { height?: number; style?: Styl
   const x = useSharedValue(0);
   useEffect(() => {
     if (!w) return;
-    x.set(withRepeat(withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.quad) }), -1, false));
+    x.set(withRepeat(withTiming(1, { duration: 1600, easing: Easing.linear }), -1, false));
   }, [w, x]);
   const sweep = useAnimatedStyle(() => ({ transform: [{ translateX: -w + x.value * w * 2 }] }));
   return (
@@ -596,7 +606,7 @@ export function ErrorBox({ message }: { message: string | null | undefined }) {
   return (
     <Animated.View
       key={message}
-      entering={FadeInDown.duration(260)}
+      entering={FadeIn.duration(motion.fast)}
       style={styles.errorBox}
       accessibilityRole="alert"
       accessibilityLiveRegion="polite">
@@ -646,6 +656,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   disabled: { opacity: 0.35 },
+  toggle: { minHeight: 44, minWidth: 52, justifyContent: 'center' },
   text: { color: colors.text, writingDirection: 'rtl' },
   label: { letterSpacing: 1.6, color: colors.textMuted, fontFamily: family.medium },
   button: {
@@ -656,9 +667,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonSmall: { minHeight: 40, paddingHorizontal: spacing.lg },
+  buttonSmall: { minHeight: 44, paddingHorizontal: spacing.lg },
   buttonText: { fontSize: font.body, fontFamily: family.semibold },
-  iconButton: { padding: spacing.sm, borderRadius: radius.pill },
+  iconButton: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill },
   iconButtonFilled: { backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border },
   field: { gap: spacing.xs + 2 },
   inputWrap: {

@@ -82,7 +82,7 @@ function EntryCard({ entry, businessName, onDone }: { entry: StudioWaitlistEntry
           </Txt>
         </View>
         {phone ? (
-          <Row gap={spacing.xs}>
+          <Row gap={spacing.sm}>
             <IconButton icon="call-outline" label={`התקשרות ל${entry.customer_name ?? 'לקוחה'}`} onPress={() => Linking.openURL(`tel:${phone}`)} />
             <IconButton
               icon="logo-whatsapp"

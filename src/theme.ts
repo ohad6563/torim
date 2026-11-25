@@ -186,3 +186,9 @@ export const springs = {
   gentle: { damping: 20, stiffness: 160 },
   bouncy: { damping: 12, stiffness: 180 },
 } as const;
+
+/**
+ * Motion tokens: every duration in the app is one of these, with one easing curve,
+ * so the motion reads as one system. Pair with `Easing.bezier(...motion.curve)`.
+ */
+export const motion = { fast: 160, base: 240, slow: 420, curve: [0.2, 0, 0, 1] as const };

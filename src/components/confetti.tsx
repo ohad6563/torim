@@ -10,9 +10,9 @@ import Animated, {
 } from 'react-native-reanimated';
 
 /** Brand palette for the celebration: ink, champagne gold, nude, warm white, taupe. */
-const PALETTE = ['#141210', '#C9A96E', '#E3C2B4', '#FFF7EF', '#8E7C72', '#B8895A'];
+const PALETTE = ['#C9A96E', '#E3C2B4', '#FFF7EF', '#8E7C72', '#B8895A'];
 
-const DURATION = 3200; // ms, the whole fall
+const DURATION = 2200; // ms, the whole fall
 const GRAVITY = 1500; // px/s²
 
 type Piece = {
@@ -43,7 +43,7 @@ function makePieces(width: number, height: number): Piece[] {
   const pieces: Piece[] = [];
   // Cannons: bottom-left shoots up-right, bottom-right shoots up-left.
   for (const side of [-1, 1]) {
-    for (let i = 0; i < 55; i++) {
+    for (let i = 0; i < 28; i++) {
       const tilt = (14 + r() * 34) * (Math.PI / 180); // angle away from straight up, towards the centre
       const speed = height * (1.05 + r() * 0.75);
       pieces.push({
@@ -60,7 +60,7 @@ function makePieces(width: number, height: number): Piece[] {
     }
   }
   // A gentle shower from the top a moment later.
-  for (let i = 0; i < 34; i++) {
+  for (let i = 0; i < 16; i++) {
     pieces.push({
       x0: r() * width,
       y0: -20 - r() * 80,
@@ -82,7 +82,8 @@ function makePieces(width: number, height: number): Piece[] {
  * would otherwise mean the right edge and send the pieces off-screen.
  * Skipped when the system "Reduce Motion" setting is on.
  */
-export function Confetti() {
+/** `delay`: ms to wait first, so the confirmation message lands before the celebration. */
+export function Confetti({ delay = 0 }: { delay?: number }) {
   const { width, height } = useWindowDimensions();
   const reduce = useReducedMotion();
   const pieces = useMemo(() => makePieces(width, height), [width, height]);
@@ -90,17 +91,17 @@ export function Confetti() {
   return (
     <View style={styles.layer} pointerEvents="none">
       {pieces.map((p, i) => (
-        <ConfettiPiece key={i} piece={p} />
+        <ConfettiPiece key={i} piece={p} delay={delay} />
       ))}
     </View>
   );
 }
 
-function ConfettiPiece({ piece }: { piece: Piece }) {
+function ConfettiPiece({ piece, delay }: { piece: Piece; delay: number }) {
   const t = useSharedValue(0);
   useEffect(() => {
-    t.set(withDelay(piece.delay, withTiming(1, { duration: DURATION, easing: Easing.linear })));
-  }, [t, piece.delay]);
+    t.set(withDelay(delay + piece.delay, withTiming(1, { duration: DURATION, easing: Easing.linear })));
+  }, [t, piece.delay, delay]);
 
   const style = useAnimatedStyle(() => {
     const s = (t.value * DURATION) / 1000; // seconds

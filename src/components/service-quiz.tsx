@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
+import Animated, { Easing, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 
 import { Button, Card, PressableScale, Row, Txt } from '@/components/ui';
 import { formatDuration, formatPrice } from '@/lib/dates';
 import { haptics } from '@/lib/haptics';
 import type { Service } from '@/lib/types';
-import { colors, radius, spacing } from '@/theme';
+import { colors, motion, radius, spacing } from '@/theme';
 
 /**
  * "What suits me?" — two quick questions that point the customer at a treatment.
@@ -70,7 +70,7 @@ export function ServiceQuiz({ services, onBook }: { services: Service[]; onBook:
         </Row>
       </Row>
 
-      <Animated.View key={step} entering={FadeInDown.springify().damping(18)} exiting={FadeOut.duration(120)} style={styles.body}>
+      <Animated.View key={step} entering={FadeInDown.duration(motion.base).easing(Easing.bezier(...motion.curve))} exiting={FadeOut.duration(motion.fast)} style={styles.body}>
         {step === 0 ? (
           <>
             <Txt muted>מה הכי חשוב לך?</Txt>
@@ -95,14 +95,14 @@ export function ServiceQuiz({ services, onBook }: { services: Service[]; onBook:
           </>
         ) : service && result ? (
           <>
-            <Animated.View entering={FadeIn.delay(120).duration(400)} style={styles.result}>
+            <View style={styles.result}>
               <Txt variant="h2">{service.name}</Txt>
               <Txt variant="small" muted>
                 {formatDuration(service.duration_min)}
                 {service.price !== null ? ` · ${formatPrice(service.price)}` : ''}
               </Txt>
               <Txt style={{ marginTop: spacing.sm }}>{result.why}</Txt>
-            </Animated.View>
+            </View>
             <Button title="קביעת תור לטיפול הזה" icon="calendar-outline" onPress={() => onBook(service.id)} />
             <Txt variant="tiny" faint center>
               ההתאמה הסופית נעשית יחד בסטודיו.

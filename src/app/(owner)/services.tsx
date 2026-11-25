@@ -43,7 +43,7 @@ export default function Services() {
       ) : (
         <View style={{ gap: spacing.sm }}>
           {data.map((s) => (
-            <Card key={s.id} onPress={() => open(s.id)} style={!s.is_active && { opacity: 0.55 }}>
+            <Card key={s.id} onPress={() => open(s.id)} style={!s.is_active && { backgroundColor: colors.surfaceRaised }}>
               <Row gap={spacing.md}>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Txt bold>{s.name}</Txt>

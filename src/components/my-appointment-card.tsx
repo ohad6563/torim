@@ -27,8 +27,8 @@ export function MyAppointmentCard({ appt, dim }: { appt: MyAppointment; dim?: bo
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Txt bold>{appt.service_name}</Txt>
-          <Txt variant="small" muted>
-            {formatDayLong(day)} · {timeOf(appt.starts_at, appt.timezone)}
+          <Txt variant="small" muted numberOfLines={1}>
+            {timeOf(appt.starts_at, appt.timezone)} · {formatDayLong(day)}
           </Txt>
         </View>
         {appt.status !== 'booked' ? <StatusBadge status={appt.status} /> : null}

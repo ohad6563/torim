@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Linking, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Animated, {
+  Easing,
   Extrapolation,
   FadeIn,
   FadeInDown,
@@ -24,9 +25,10 @@ import { BrowScene } from '@/components/brow-scene';
 import { useAuth } from '@/context/auth';
 import { useMyAppointments } from '@/hooks/use-my-appointments';
 import { usePublicBusiness } from '@/hooks/use-public-business';
-import { formatDuration, formatPhone, formatPrice, timeRange, todayIn, WEEKDAYS, weekdayOf } from '@/lib/dates';
+import { addDays, dayOf, formatDayLong, formatDuration, formatPhone, formatPrice, timeOf, timeRange, todayIn, WEEKDAYS, weekdayOf } from '@/lib/dates';
+import { useAvailability } from '@/hooks/use-availability';
 import { whatsappUrl } from '@/lib/links';
-import { colors, MAX_WIDTH, radius, spacing } from '@/theme';
+import { colors, MAX_WIDTH, motion, radius, spacing } from '@/theme';
 
 /**
  * The customer-facing home of a business: brand hero with the signature brow
@@ -58,6 +60,16 @@ export function BusinessHome({ slug }: { slug: string }) {
   );
   const firstName = profile?.full_name?.trim().split(/\s+/)[0];
 
+  // "The next free time" for the studio's first treatment over the coming two weeks.
+  const nextService = data?.services[0];
+  const nextTz = data?.business.timezone ?? 'Asia/Jerusalem';
+  const nextDays = useMemo(() => Array.from({ length: 14 }, (_, i) => addDays(todayIn(nextTz), i)), [nextTz]);
+  const nextClosed = useMemo(() => {
+    const open = new Set((data?.hours ?? []).map((h) => h.weekday));
+    return new Set(nextDays.filter((d) => !open.has(weekdayOf(d))));
+  }, [data, nextDays]);
+  const next = useAvailability(data?.business.id, nextService?.id, nextDays, nextClosed);
+
   if (loading) return <Loading />;
   if (error && !data) {
     return (
@@ -85,10 +97,10 @@ export function BusinessHome({ slug }: { slug: string }) {
     <View style={[styles.heroBox, { paddingTop: insets.top + spacing.xxl, minHeight: (wide ? 640 : 560) + insets.top }]}>
       <BrowScene scrollY={scrollY} overlay="hero" />
       <Animated.View style={[styles.hero, heroFade]}>
-      <Animated.View entering={FadeIn.duration(900)} style={{ gap: spacing.xs }}>
+      <Animated.View entering={FadeIn.duration(motion.slow).easing(Easing.bezier(...motion.curve))} style={{ gap: spacing.xs }}>
         {firstName ? (
           <Txt center color="rgba(255,255,255,0.85)">
-            היי {firstName} 👋
+            היי {firstName}
           </Txt>
         ) : null}
         <Txt label variant="tiny" center color="rgba(255,255,255,0.7)">
@@ -97,19 +109,19 @@ export function BusinessHome({ slug }: { slug: string }) {
         </Txt>
       </Animated.View>
       <BrowMark width={wide ? 170 : 120} color="#FFFFFF" style={{ marginVertical: spacing.lg }} />
-      <Animated.View entering={FadeInDown.delay(500).duration(800)}>
+      <Animated.View entering={FadeInDown.delay(80).duration(motion.slow).easing(Easing.bezier(...motion.curve))}>
         <Txt variant="display" center color="#FFFFFF" style={wide && { fontSize: 64, lineHeight: 70 }}>
           {business.name}
         </Txt>
       </Animated.View>
       {business.description ? (
-        <Animated.View entering={FadeInDown.delay(750).duration(800)}>
+        <Animated.View entering={FadeInDown.delay(160).duration(motion.slow).easing(Easing.bezier(...motion.curve))}>
           <Txt center color="rgba(255,255,255,0.78)" style={styles.tagline}>
             {business.description}
           </Txt>
         </Animated.View>
       ) : null}
-      <Animated.View entering={FadeInDown.delay(1000).duration(800)} style={styles.heroCta}>
+      <Animated.View entering={FadeInDown.delay(240).duration(motion.slow).easing(Easing.bezier(...motion.curve))} style={styles.heroCta}>
         <Button title="קביעת תור" icon="calendar-outline" variant="inverse" onPress={() => book()} />
         <Row gap={spacing.md} style={{ justifyContent: 'center' }}>
           {business.phone ? (
@@ -149,6 +161,34 @@ export function BusinessHome({ slug }: { slug: string }) {
               <MyAppointmentCard key={a.id} appt={a} />
             ))}
           </View>
+        </Appear>
+      ) : null}
+
+      {next.first && nextService ? (
+        <Appear>
+          <PressableScale
+            onPress={() =>
+              router.push({ pathname: '/book/[slug]', params: { slug, service: nextService.id, day: dayOf(next.first!, tz) } })
+            }
+            accessibilityLabel={`התור הפנוי הבא: ${nextService.name}, ${relativeDay(dayOf(next.first, tz), today)} בשעה ${timeOf(next.first, tz)}. לקביעה`}
+            style={styles.nextSlot}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Txt label variant="tiny">
+                התור הפנוי הבא
+              </Txt>
+              <Txt variant="h3">
+                {relativeDay(dayOf(next.first, tz), today)} · {timeOf(next.first, tz)}
+              </Txt>
+              <Txt variant="small" muted>
+                {nextService.name}
+              </Txt>
+            </View>
+            <View style={styles.nextCta}>
+              <Txt variant="small" bold color={colors.textOnPrimary}>
+                לקבוע
+              </Txt>
+            </View>
+          </PressableScale>
         </Appear>
       ) : null}
 
@@ -326,6 +366,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
+  nextSlot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surface,
+  },
+  nextCta: {
+    minHeight: 44,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   footer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -334,3 +392,10 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
   },
 });
+
+/** "היום" / "מחר" / full day name, for the next-free-time card. */
+function relativeDay(day: string, today: string) {
+  if (day === today) return 'היום';
+  if (day === addDays(today, 1)) return 'מחר';
+  return formatDayLong(day);
+}

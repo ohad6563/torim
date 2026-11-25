@@ -122,6 +122,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.lg,
   },
 });

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, type Href } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { LegalLinks } from '@/components/legal-page';
 import { Button, Card, Divider, Row, Screen, Txt, type IconName } from '@/components/ui';
 import { useAuth, useBusiness } from '@/context/auth';
 import { confirm, showMessage } from '@/lib/dialogs';
@@ -93,8 +94,12 @@ export default function Settings() {
         מחובר/ת כ־{profile?.phone ? `\u2066${formatPhone(profile.phone)}\u2069` : (session?.user.email ?? '')}
       </Txt>
       <Button title="התנתקות" variant="secondary" icon="log-out-outline" onPress={logout} />
-      <Button title="מדיניות פרטיות" variant="ghost" onPress={() => router.push('/privacy')} />
-      <Button title="מחיקת החשבון" variant="ghost" onPress={deleteAccount} style={{ opacity: 0.8 }} />
+      <LegalLinks />
+      <Pressable onPress={deleteAccount} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
+        <Txt variant="small" color={colors.danger} center>
+          מחיקת החשבון
+        </Txt>
+      </Pressable>
     </Screen>
   );
 }

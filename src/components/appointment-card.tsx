@@ -78,7 +78,8 @@ export function AppointmentCard({
 
 const styles = StyleSheet.create({
   card: { paddingVertical: spacing.md },
-  inactive: { opacity: 0.6 },
+  // Past/cancelled: a quieter background instead of fading the text (keeps 4.5:1 contrast).
+  inactive: { backgroundColor: colors.surfaceRaised },
   time: { width: 52, alignItems: 'center', justifyContent: 'center' },
   bar: { width: 3, borderRadius: 2, backgroundColor: colors.primary, opacity: 0.35 },
   body: { flex: 1, justifyContent: 'center', gap: 2 },

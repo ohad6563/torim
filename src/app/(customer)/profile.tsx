@@ -4,6 +4,7 @@ import { Pressable, View } from 'react-native';
 
 import { RemindersCard } from '@/components/reminders-card';
 import { Appear, Button, Card, ErrorBox, Field, Row, Screen, Txt } from '@/components/ui';
+import { LegalLinks } from '@/components/legal-page';
 import { useAuth } from '@/context/auth';
 import { formatPhone, normalizePhone } from '@/lib/dates';
 import { isMobile } from '@/lib/identity';
@@ -116,24 +117,8 @@ export default function Profile() {
 
       <Appear index={2} style={{ gap: spacing.sm }}>
         <Button title="יציאה מהחשבון" variant="secondary" icon="log-out-outline" onPress={logout} />
-        <Txt variant="small" muted center style={{ padding: spacing.md }}>
-          <Txt variant="small" muted onPress={() => router.push('/terms')}>
-            תנאי שימוש
-          </Txt>
-          {'  ·  '}
-          <Txt variant="small" muted onPress={() => router.push('/privacy')}>
-            מדיניות פרטיות
-          </Txt>
-          {'  ·  '}
-          <Txt variant="small" muted onPress={() => router.push('/accessibility')}>
-            נגישות
-          </Txt>
-          {'  ·  '}
-          <Txt variant="small" muted onPress={() => router.push('/support')}>
-            תמיכה
-          </Txt>
-        </Txt>
-        <Pressable onPress={deleteAccount} accessibilityRole="button" style={{ padding: spacing.md }}>
+        <LegalLinks />
+        <Pressable onPress={deleteAccount} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
           <Txt variant="small" color={colors.danger} center>
             מחיקת החשבון
           </Txt>

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
 
 import { Button, Chip, ErrorBox, Field, Row, Txt } from '@/components/ui';
 import { formatDayLong } from '@/lib/dates';
@@ -9,7 +9,7 @@ import { errorMessage } from '@/lib/errors';
 import { haptics } from '@/lib/haptics';
 import { pushSupported, registerForPush } from '@/lib/push';
 import { DAY_PARTS, joinWaitlist, leaveWaitlist, partLabel, type DayPart, type MyWaitlistEntry } from '@/lib/waitlist';
-import { colors, radius, spacing } from '@/theme';
+import { colors, motion, radius, spacing } from '@/theme';
 
 /**
  * Under the time wheel in the booking flow: join the waitlist for the chosen day
@@ -63,7 +63,7 @@ export function WaitlistCard({
     setError(null);
     try {
       await leaveWaitlist(entry.id);
-      haptics.tap();
+      haptics.select();
       onChanged();
     } catch (e) {
       setError(errorMessage(e));
@@ -74,7 +74,7 @@ export function WaitlistCard({
 
   if (entry) {
     return (
-      <Animated.View key="on" entering={FadeInDown.springify().damping(18)} layout={LinearTransition} style={[styles.card, styles.onList]}>
+      <Animated.View key="on" entering={FadeIn.duration(motion.base)} style={[styles.card, styles.onList]}>
         <Row gap={spacing.md} style={{ alignItems: 'flex-start' }}>
           <View style={[styles.icon, { backgroundColor: colors.primary }]}>
             <Ionicons name="checkmark" size={18} color={colors.textOnPrimary} />
@@ -100,7 +100,7 @@ export function WaitlistCard({
   if (!open) {
     if (full) {
       return (
-        <Animated.View key="full" entering={FadeIn.duration(300)} style={styles.card}>
+        <Animated.View key="full" entering={FadeIn.duration(motion.base)} style={styles.card}>
           <Row gap={spacing.md} style={{ alignItems: 'flex-start' }}>
             <View style={styles.icon}>
               <Ionicons name="hourglass-outline" size={18} color={colors.text} />
@@ -131,7 +131,7 @@ export function WaitlistCard({
   }
 
   return (
-    <Animated.View key="form" entering={FadeInDown.springify().damping(18)} exiting={FadeOut.duration(120)} style={styles.card}>
+    <Animated.View key="form" entering={FadeInDown.duration(motion.base).easing(Easing.bezier(...motion.curve))} exiting={FadeOut.duration(motion.fast)} style={styles.card}>
       <View style={{ gap: 2 }}>
         <Txt bold>רשימת המתנה · {formatDayLong(day)}</Txt>
         <Txt variant="small" muted>

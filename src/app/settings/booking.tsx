@@ -47,7 +47,7 @@ function BookingSettings() {
 
   return (
     <Screen footer={<Button title="שמירה" onPress={save} loading={busy} />}>
-      <Setting title="מרווח בין שעות" subtitle="כל כמה דקות מוצעת שעת התחלה (למשל 9:00, 9:15, 9:30)">
+      <Setting title="מרווח בין שעות" subtitle={"כל כמה דקות מוצעת שעת התחלה (למשל \u20669:00, 9:15, 9:30\u2069)"}>
         {INTERVALS.map((v) => (
           <Chip key={v} label={`${v} דק׳`} selected={interval === v} onPress={() => setSlotInterval(v)} />
         ))}
