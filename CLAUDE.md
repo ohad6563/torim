@@ -34,7 +34,7 @@ Then replace the contents of `gh-pages` with `dist/` (for example through a `git
 
 ## Architecture
 
-**The database holds the business logic.** `supabase/migrations/0001`–`0006` are applied by hand in the Supabase SQL Editor; there is no CLI linkage.
+**The database holds the business logic.** `supabase/migrations/0001`–`0007` are applied by hand in the Supabase SQL Editor; there is no CLI linkage.
 - Every table has RLS, and most writes go through `SECURITY DEFINER` RPCs that check rules server-side:
   - `get_available_slots`
   - `book_appointment` (requires a profile phone, max 3 upcoming bookings, no overlap)
@@ -59,7 +59,9 @@ Then replace the contents of `gh-pages` with `dist/` (for example through a `git
 - Public pages that need no login: `privacy`, `terms`, `accessibility`, `support`, `delete-account`. Their legal and contact details come from `EXPO_PUBLIC_STUDIO_*` through `src/lib/studio.ts`. Empty values are placeholders until the owner supplies them.
 
 **Push notifications** (free, through Expo's push API):
-- Triggers on `appointments` fill `notification_queue`: confirmation, a reminder 24 hours before and one 2 hours before.
+- Triggers on `appointments` fill `notification_queue`: confirmation, reminders 48h / 24h / 2h before, and a per-service "time for your next visit" nudge (`services.rebook_after_days`).
+- The 24h reminder carries the `reminder` category (buttons "מגיעה ✓" → `confirm_my_appointment` sets `confirmed_at`, "צריכה להזיז"); registered and handled in `PushManager`.
+- `send_due_notifications` holds pushes on Shabbat (Fri 15:00 – Sat 20:30 Israel time) except confirmation/updated/2h.
 - When a booked time frees up, people on the waitlist are notified.
 - A `pg_cron` job runs `send_due_notifications()` every minute and posts through `pg_net`.
 - The client registers tokens with `register_push_token` (`src/lib/push.ts`). `PushManager` opens the `data.url` of a notification when it is tapped.

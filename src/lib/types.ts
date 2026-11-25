@@ -21,6 +21,8 @@ export type Service = {
   price: number | null;
   is_active: boolean;
   sort_order: number;
+  /** Push "time for your next visit" this many days after a visit; null = off (migration 0007). */
+  rebook_after_days?: number | null;
 };
 
 export type WorkingHours = {
@@ -66,6 +68,8 @@ export type Appointment = {
   local_date: string;
   customer_name: string;
   customer_phone: string | null;
+  /** Set when the customer tapped "מגיעה" on the reminder (migration 0007). */
+  confirmed_at?: string | null;
 };
 
 export type PublicAppointment = {

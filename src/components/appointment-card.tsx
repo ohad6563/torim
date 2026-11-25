@@ -70,7 +70,15 @@ export function AppointmentCard({
             {appt.notes ? `${showCustomer ? ' · ' : ''}${appt.notes}` : ''}
           </Txt>
         </View>
-        {appt.status !== 'booked' ? <StatusBadge status={appt.status} /> : null}
+        {appt.status !== 'booked' ? (
+          <StatusBadge status={appt.status} />
+        ) : appt.confirmed_at ? (
+          <View style={[styles.badge, { backgroundColor: colors.successSoft }]} accessibilityLabel="הלקוחה אישרה הגעה">
+            <Txt variant="tiny" bold color={colors.success}>
+              אישרה ✓
+            </Txt>
+          </View>
+        ) : null}
       </Row>
     </Card>
   );

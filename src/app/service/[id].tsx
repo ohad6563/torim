@@ -14,6 +14,13 @@ import { withOwner } from '@/components/owner-gate';
 import { goBackOr } from '@/lib/nav';
 
 const DURATIONS = [15, 20, 30, 45, 60, 75, 90, 120];
+const REBOOK: { days: number | null; label: string }[] = [
+  { days: null, label: 'ללא' },
+  { days: 21, label: '3 שבועות' },
+  { days: 28, label: '4 שבועות' },
+  { days: 42, label: '6 שבועות' },
+  { days: 56, label: '8 שבועות' },
+];
 
 function EditService() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,6 +31,7 @@ function EditService() {
   const [duration, setDuration] = useState('30');
   const [price, setPrice] = useState('');
   const [active, setActive] = useState(true);
+  const [rebook, setRebook] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +49,7 @@ function EditService() {
           setDuration(String(s.duration_min));
           setPrice(s.price !== null ? String(s.price) : '');
           setActive(s.is_active);
+          setRebook(s.rebook_after_days ?? null);
         }
         setLoading(false);
       });
@@ -57,7 +66,7 @@ function EditService() {
     if (priceNum !== null && (Number.isNaN(priceNum) || priceNum < 0)) return setError('המחיר לא תקין.');
 
     setBusy(true);
-    const row = { name: name.trim(), duration_min: durationMin, price: priceNum, is_active: active };
+    const row = { name: name.trim(), duration_min: durationMin, price: priceNum, is_active: active, rebook_after_days: rebook };
     const { error: err } = isNew
       ? await supabase.from('services').insert({ ...row, business_id: business.id, sort_order: 999 })
       : await supabase.from('services').update(row).eq('id', id);
@@ -97,6 +106,20 @@ function EditService() {
       </View>
 
       <Field label="מחיר (₪)" value={price} onChangeText={setPrice} keyboardType="decimal-pad" placeholder="לא חובה" />
+
+      <View style={{ gap: spacing.sm }}>
+        <Txt variant="small" bold>
+          תזכורת לסידור הבא
+        </Txt>
+        <Txt variant="small" muted>
+          כמה זמן אחרי הטיפול הלקוחה תקבל הודעה ״הגיע הזמן לסידור״. מתבטלת אם היא כבר קבעה תור.
+        </Txt>
+        <Row style={{ flexWrap: 'wrap' }}>
+          {REBOOK.map((r) => (
+            <Chip key={r.label} label={r.label} selected={rebook === r.days} onPress={() => setRebook(r.days)} />
+          ))}
+        </Row>
+      </View>
 
       <Row>
         <View style={{ flex: 1 }}>
